@@ -4,6 +4,8 @@
 
 # GroupShuffle
 
+<p align="center"><a href="README.en.md">English</a> · <b>简体中文</b></p>
+
 把一份名单/文本按行随机、平均地分成若干组的 Windows 桌面应用。Electron + 原生 HTML/CSS/JS，**零运行时依赖**，为 10 万+ 行数据做过专门优化。
 
 ## 运行
@@ -84,7 +86,7 @@ node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.c
 
 ```
 main.js              主进程：窗口、原生对话框、fs 读写
-preload.js           contextBridge 白名单（openTxt / saveTxt / saveAll / reveal）
+preload.js           contextBridge 白名单（setLang / openTxt / saveTxt / saveAll / reveal）
 renderer/index.html  界面结构（文案挂 data-i18n，不写死）
 renderer/styles.css  样式（自动跟随系统深浅色）
 renderer/core.js     与 DOM 无关的核心算法（随机数 / 解析 / 洗牌 / 分组 / Fenwick）
@@ -102,4 +104,4 @@ node -e "require('./renderer/core.js').parseItems('a\nb\n\nc').then(r=>console.l
 
 排查渲染进程报错时，用 `RG_DEBUG=1` 启动，控制台输出会转发到终端。
 
-渲染进程 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`，不直接接触文件系统；所有读写都经由 preload 暴露的四个方法走主进程。
+渲染进程 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`，不直接接触文件系统；所有读写都经由 preload 暴露的五个方法走主进程。
