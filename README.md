@@ -34,7 +34,9 @@ npm run dist
 - 「长内容自动换行」开关；关闭后长行单行截断，滚动最省资源
 - 导入 TXT：点按钮选文件，或直接把 `.txt` 拖到输入区
 - `Ctrl + Enter` 快速分组
-- **最小化收进系统托盘**（右下角通知区域），不占任务栏；点托盘图标恢复，右键可「显示主窗口 / 退出」。关闭窗口仍然是直接退出，不会赖在后台
+- **中文 / English 一键切换**，右上角按钮；选择记在 localStorage，首次按系统语言判断。原生对话框和托盘菜单也跟着切
+- **最小化收进系统托盘**（右下角通知区域），不占任务栏；点托盘图标恢复，右键可「显示主窗口 / 退出」
+- **关闭窗口有二次确认**，误触不会丢掉分组结果；托盘「退出」和系统关机是明确意图，不重复问
 - 滚动条跟随深浅色主题，不再是默认那条扎眼的亮白条
 
 导出文件为 **UTF-8 + BOM、CRLF 行尾**，记事本 / Excel 打开不乱码、不粘成一行。
@@ -83,11 +85,14 @@ node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.c
 ```
 main.js              主进程：窗口、原生对话框、fs 读写
 preload.js           contextBridge 白名单（openTxt / saveTxt / saveAll / reveal）
-renderer/index.html  界面结构
+renderer/index.html  界面结构（文案挂 data-i18n，不写死）
 renderer/styles.css  样式（自动跟随系统深浅色）
 renderer/core.js     与 DOM 无关的核心算法（随机数 / 解析 / 洗牌 / 分组 / Fenwick）
+renderer/i18n.js     中英文文案字典
 renderer/app.js      界面交互与虚拟滚动
 ```
+
+文案统一走 `renderer/i18n.js`；主进程另有一份小字典管原生对话框和托盘，渲染进程切语言时通过 `app:setLang` 同步过去。
 
 `core.js` 不依赖任何 DOM，可以直接在 Node 里 `require` 出来测：
 
