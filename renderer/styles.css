@@ -77,6 +77,11 @@ body {
   flex: 0 0 auto;
 }
 
+.topbar .lang {
+  margin-left: auto;
+  min-width: 62px;
+}
+
 .topbar h1 {
   margin: 0;
   font-size: 17px;

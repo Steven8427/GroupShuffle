@@ -13,8 +13,9 @@
     <img class="logo" src="../assets/icon.png" alt="">
     <div>
       <h1>GroupShuffle</h1>
-      <p class="sub">把名单随机、平均分成若干组 · 支持 10 万+ 行</p>
+      <p class="sub" data-i18n="app.subtitle"></p>
     </div>
+    <button class="btn ghost lang" id="btnLang" type="button" data-i18n="lang.toggle"></button>
   </header>
 
   <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
@@ -22,56 +23,56 @@
   <main>
     <section class="panel">
       <div class="panel-head">
-        <h2><span class="step">1</span>输入内容</h2>
+        <h2><span class="step">1</span><span data-i18n="section.input"></span></h2>
         <div class="head-actions">
-          <span class="stat" id="lineStat">0 行</span>
-          <button class="btn ghost" id="btnImport" type="button">导入 TXT</button>
+          <span class="stat" id="lineStat"></span>
+          <button class="btn ghost" id="btnImport" type="button" data-i18n="btn.import"></button>
         </div>
       </div>
-      <textarea id="input" spellcheck="false" wrap="off"
-        placeholder="每行一个内容，例如：&#10;Jason&#10;Steven&#10;Mike&#10;&#10;也可以直接把 .txt 文件拖到这里"></textarea>
+      <textarea id="input" spellcheck="false" wrap="off" data-i18n-placeholder="input.placeholder"></textarea>
       <div class="collapsed-input" id="collapsedInput" hidden>
         <div class="collapsed-head">
-          <strong id="collapsedText">已载入 0 行</strong>
-          <span class="hint">只渲染可见的十几行，下面可以直接滚动查看</span>
-          <button class="btn mini" id="btnExpand" type="button">编辑内容</button>
+          <strong id="collapsedText"></strong>
+          <span class="hint" data-i18n="collapsed.hint"></span>
+          <button class="btn mini" id="btnExpand" type="button" data-i18n="btn.expand"></button>
         </div>
         <div class="vlist preview" id="previewList"><div class="vpad"></div></div>
       </div>
-      <div class="drop-hint" id="dropHint">松开即可导入</div>
+      <div class="drop-hint" id="dropHint" data-i18n="drop.hint"></div>
     </section>
 
     <section class="panel">
       <div class="panel-head">
-        <h2><span class="step">2</span>分组数量</h2>
+        <h2><span class="step">2</span><span data-i18n="section.groups"></span></h2>
       </div>
       <div class="row">
         <div class="seg" id="seg">
-          <button type="button" data-k="2">2 组</button>
-          <button type="button" data-k="3" class="on">3 组</button>
-          <button type="button" data-k="4">4 组</button>
-          <button type="button" data-k="5">5 组</button>
+          <button type="button" data-k="2"></button>
+          <button type="button" data-k="3" class="on"></button>
+          <button type="button" data-k="4"></button>
+          <button type="button" data-k="5"></button>
         </div>
-        <label class="custom">自定义
+        <label class="custom">
+          <span data-i18n="custom.label"></span>
           <input id="kInput" type="number" min="1" max="1000" step="1" value="3">
-          组
+          <span data-i18n="custom.unit"></span>
         </label>
       </div>
       <div class="row actions">
-        <button class="btn primary" id="btnRun" type="button">开始随机分组</button>
-        <button class="btn" id="btnClear" type="button">清空</button>
-        <label class="check"><input type="checkbox" id="optIndex"><span>复制 / 导出时包含序号</span></label>
-        <label class="check"><input type="checkbox" id="optWrap" checked><span>长内容自动换行</span></label>
-        <span class="hint">Ctrl + Enter 快速分组</span>
+        <button class="btn primary" id="btnRun" type="button" data-i18n="btn.run"></button>
+        <button class="btn" id="btnClear" type="button" data-i18n="btn.clear"></button>
+        <label class="check"><input type="checkbox" id="optIndex"><span data-i18n="opt.index"></span></label>
+        <label class="check"><input type="checkbox" id="optWrap" checked><span data-i18n="opt.wrap"></span></label>
+        <span class="hint" data-i18n="hint.shortcut"></span>
       </div>
     </section>
 
     <section class="panel results" id="resultPanel" hidden>
       <div class="panel-head">
-        <h2><span class="step">3</span>分组结果</h2>
+        <h2><span class="step">3</span><span data-i18n="section.results"></span></h2>
         <div class="head-actions">
           <span class="stat" id="resultStat"></span>
-          <button class="btn ghost" id="btnExportAll" type="button">全部导出到文件夹</button>
+          <button class="btn ghost" id="btnExportAll" type="button" data-i18n="btn.exportAll"></button>
         </div>
       </div>
       <div class="cards" id="cards"></div>
@@ -80,6 +81,7 @@
 
   <div class="toast" id="toast" hidden></div>
 
+  <script src="i18n.js"></script>
   <script src="core.js"></script>
   <script src="app.js"></script>
 </body>

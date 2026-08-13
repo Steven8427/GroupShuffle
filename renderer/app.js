@@ -10,6 +10,7 @@
  */
 (() => {
   const { createRng, makeRandBelow, parseItems, shuffle, computeOffsets, Fenwick } = window.RGCore;
+  const { t, fmt, setLang, getLang } = window.RGI18n;
   const api = window.api || null;
   const $ = (id) => document.getElementById(id);
 
@@ -34,6 +35,7 @@
     progress: $('progress'),
     progressBar: $('progressBar'),
     toast: $('toast'),
+    btnLang: $('btnLang'),
     inputPanel: $('input').closest('.panel'),
   };
 
@@ -52,8 +54,8 @@
   let collapsed = false;
   /** @type {string[]|null} */ let previewLines = null;
   /** @type {VList|null} */ let previewList = null;
-
-  const fmt = (n) => n.toLocaleString('zh-CN');
+  /** 上次分组的统计数据，切语言时要用它重新格式化 */
+  let lastStats = null;
 
   const groupSize = (g) => offsets[g + 1] - offsets[g];
   const itemAt = (g, i) => items[order[offsets[g] + i]];
@@ -295,11 +297,11 @@
 
       const title = document.createElement('span');
       title.className = 'card-title';
-      title.textContent = `第 ${g + 1} 组`;
+      title.textContent = t('card.title', { n: g + 1 });
 
       const count = document.createElement('span');
       count.className = 'card-count';
-      count.textContent = `${fmt(size)} 项`;
+      count.textContent = t('card.count', { n: fmt(size) });
 
       const actions = document.createElement('div');
       actions.className = 'card-actions';
@@ -307,13 +309,13 @@
       const btnCopy = document.createElement('button');
       btnCopy.type = 'button';
       btnCopy.className = 'btn mini';
-      btnCopy.textContent = '复制本组';
+      btnCopy.textContent = t('btn.copy');
       btnCopy.addEventListener('click', () => copyGroup(g, btnCopy));
 
       const btnExport = document.createElement('button');
       btnExport.type = 'button';
       btnExport.className = 'btn mini';
-      btnExport.textContent = '导出 TXT';
+      btnExport.textContent = t('btn.export');
       btnExport.addEventListener('click', () => exportGroup(g, btnExport));
 
       actions.append(btnCopy, btnExport);
@@ -323,7 +325,7 @@
       if (size === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-group';
-        empty.textContent = '（空组，项目数少于分组数）';
+        empty.textContent = t('card.empty');
         card.appendChild(empty);
       } else {
         const vp = document.createElement('div');
@@ -397,8 +399,8 @@
   async function copyGroup(g, btn) {
     if (groupSize(g) === 0) return;
     const ok = await writeClipboard(groupText(g, el.optIndex.checked));
-    if (ok) flash(btn, '已复制 ✓');
-    else toast('复制失败，请重试');
+    if (ok) flash(btn, t('toast.copied'));
+    else toast(t('toast.copyFail'));
   }
 
   function downloadText(name, text) {
@@ -418,10 +420,10 @@
     const res = await api.saveTxt(name, text);
     if (res.canceled) return;
     if (res.ok) {
-      flash(btn, '已导出 ✓');
-      toast(`已保存 ${res.path}`, '打开位置', () => api.reveal(res.path));
+      flash(btn, t('toast.exported'));
+      toast(t('toast.saved', { path: res.path }), t('toast.openLocation'), () => api.reveal(res.path));
     } else {
-      toast('导出失败：' + res.error);
+      toast(t('toast.exportFail', { err: res.error }));
     }
   }
 
@@ -442,8 +444,11 @@
     }
     const res = await api.saveAll(files);
     if (res.canceled) return;
-    if (res.ok) toast(`已导出 ${res.written} 个文件到 ${res.dir}`, '打开文件夹', () => api.reveal(res.dir));
-    else toast('导出失败：' + res.error);
+    if (res.ok) {
+      toast(t('toast.exportedAll', { n: res.written, dir: res.dir }), t('toast.openFolder'), () => api.reveal(res.dir));
+    } else {
+      toast(t('toast.exportFail', { err: res.error }));
+    }
   }
 
   // ==========================================================
@@ -452,7 +457,7 @@
   function setBusy(on) {
     busy = on;
     [el.btnRun, el.btnClear, el.btnImport, el.btnExportAll].forEach((b) => { b.disabled = on; });
-    el.btnRun.textContent = on ? '分组中…' : '开始随机分组';
+    el.btnRun.textContent = on ? t('btn.running') : t('btn.run');
     el.progress.classList.toggle('on', on);
     if (!on) el.progressBar.style.width = '0%';
   }
@@ -480,8 +485,9 @@
 
       const n = items.length;
       if (n === 0) {
-        toast('没有可分组的内容');
+        toast(t('toast.noContent'));
         el.resultPanel.hidden = true;
+        offsets = null; lastStats = null;
         clearResults();
         return;
       }
@@ -505,13 +511,22 @@
         if (s < lo) lo = s;
         if (s > hi) hi = s;
       }
-      el.resultStat.textContent =
-        `共 ${fmt(n)} 项 · ${k} 组 · 每组 ${lo === hi ? fmt(lo) : `${fmt(lo)}~${fmt(hi)}`} 项 · 用时 ${ms} ms`;
-      if (n < k) toast(`只有 ${n} 项，有 ${k - n} 个组为空`);
+      lastStats = { n, k, lo, hi, ms };
+      renderResultStat();
+      if (n < k) toast(t('toast.emptyGroups', { n, k: k - n }));
       showProgress(1);
     } finally {
       setBusy(false);
     }
+  }
+
+  function renderResultStat() {
+    if (!lastStats) { el.resultStat.textContent = ''; return; }
+    const { n, k, lo, hi, ms } = lastStats;
+    el.resultStat.textContent = t('stat.result', {
+      n: fmt(n), k, ms,
+      size: lo === hi ? fmt(lo) : `${fmt(lo)}~${fmt(hi)}`,
+    });
   }
 
   function avgLength(arr) {
@@ -542,8 +557,8 @@
 
   function updateLineStat() {
     syncRawText();
-    el.lineStat.textContent = `${fmt(lineCount)} 行`;
-    el.collapsedText.textContent = `已载入 ${fmt(lineCount)} 行`;
+    el.lineStat.textContent = t('stat.lines', { n: fmt(lineCount) });
+    el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
   }
 
   function collapseInput() {
@@ -553,7 +568,7 @@
     el.input.value = ''; // 关键：把巨大的文本控件从布局里拿掉
     el.input.hidden = true;
     el.collapsedInput.hidden = false;
-    el.collapsedText.textContent = `已载入 ${fmt(lineCount)} 行`;
+    el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
     buildPreview();
   }
 
@@ -582,7 +597,7 @@
     if (!collapsed) return;
     // 把大文本放回文本框必然要付一次原生排版的钱，先让提示画出来再动手
     if (lineCount > 20000) {
-      toast(`正在展开 ${fmt(lineCount)} 行，可能需要几秒…`);
+      toast(t('toast.expanding', { n: fmt(lineCount) }));
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     }
     collapsed = false;
@@ -634,7 +649,7 @@
     el.input.hidden = false;
     el.collapsedInput.hidden = true;
     el.input.value = '';
-    items = []; order = null; offsets = null;
+    items = []; order = null; offsets = null; lastStats = null;
     clearResults();
     el.resultPanel.hidden = true;
     updateLineStat();
@@ -675,7 +690,7 @@
       el.input.value = '';
       el.input.hidden = true;
       el.collapsedInput.hidden = false;
-      el.collapsedText.textContent = `已载入 ${fmt(lineCount)} 行`;
+      el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
       buildPreview();
     } else {
       collapsed = false;
@@ -685,7 +700,7 @@
       el.input.value = text;
     }
     updateLineStat();
-    toast(`已导入 ${fmt(lineCount)} 行`);
+    toast(t('toast.imported', { n: fmt(lineCount) }));
   }
 
   // 拖拽 .txt 到输入区
@@ -730,6 +745,43 @@
     toastTimer = setTimeout(() => { el.toast.hidden = true; }, actionLabel ? 6000 : 2600);
   }
 
-  updateLineStat();
+  // ==========================================================
+  // 语言切换
+  // ==========================================================
+  const LANG_KEY = 'groupshuffle.lang';
+
+  function applyI18n() {
+    document.documentElement.lang = getLang() === 'zh' ? 'zh-CN' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach((node) => {
+      node.textContent = t(node.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+      node.placeholder = t(node.dataset.i18nPlaceholder);
+    });
+    el.seg.querySelectorAll('button[data-k]').forEach((btn) => {
+      btn.textContent = t('seg.groups', { n: btn.dataset.k });
+    });
+    el.btnRun.textContent = busy ? t('btn.running') : t('btn.run');
+    updateLineStat();
+    renderResultStat();
+    // 结果里的组名/按钮也要换，重建一次卡片即可（数据不动）
+    if (offsets) renderResults();
+  }
+
+  function switchLang(next) {
+    setLang(next);
+    try { localStorage.setItem(LANG_KEY, getLang()); } catch (_) { /* 隐私模式忽略 */ }
+    // 主进程的对话框/托盘文案跟着走；失败不影响界面，吞掉即可
+    if (api && api.setLang) Promise.resolve(api.setLang(getLang())).catch(() => {});
+    applyI18n();
+  }
+
+  el.btnLang.addEventListener('click', () => switchLang(getLang() === 'zh' ? 'en' : 'zh'));
+
+  let initial = null;
+  try { initial = localStorage.getItem(LANG_KEY); } catch (_) { /* 忽略 */ }
+  if (!initial) initial = /^zh\b/i.test(navigator.language || '') ? 'zh' : 'en';
+  switchLang(initial);
+
   el.input.focus();
 })();
