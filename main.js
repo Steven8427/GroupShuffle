@@ -17,7 +17,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: '随机分组',
+    title: 'GroupShuffle',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     backgroundColor: '#f5f6f8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

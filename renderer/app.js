@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 随机分组 —— 渲染进程
+ * GroupShuffle —— 渲染进程
  *
  * 大数据量的三个关键约束：
  *  1. 不复制字符串：items 只保留一份，全程用 Uint32Array 下标操作。

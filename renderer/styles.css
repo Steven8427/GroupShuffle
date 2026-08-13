@@ -53,9 +53,18 @@ body {
 /* ---------- 顶栏 ---------- */
 .topbar {
   flex: 0 0 auto;
-  padding: 14px 22px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 22px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+}
+
+.topbar .logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
 }
 
 .topbar h1 {

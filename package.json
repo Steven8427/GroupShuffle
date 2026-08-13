@@ -1,6 +1,6 @@
 {
-  "name": "random-grouper",
-  "productName": "RandomGrouper",
+  "name": "groupshuffle",
+  "productName": "GroupShuffle",
   "version": "1.0.0",
   "description": "随机、平均分组桌面工具，支持 10 万+ 行数据",
   "main": "main.js",
@@ -15,8 +15,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.steven.randomgrouper",
-    "productName": "RandomGrouper",
+    "appId": "com.steven.groupshuffle",
+    "productName": "GroupShuffle",
     "asar": true,
     "directories": {
       "output": "dist"
@@ -25,9 +25,11 @@
       "main.js",
       "preload.js",
       "renderer/**/*",
+      "assets/**/*",
       "package.json"
     ],
     "win": {
+      "icon": "assets/icon.png",
       "target": [
         {
           "target": "nsis",
@@ -44,10 +46,10 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "随机分组"
+      "shortcutName": "GroupShuffle"
     },
     "portable": {
-      "artifactName": "随机分组-${version}-portable.exe"
+      "artifactName": "GroupShuffle-${version}-portable.exe"
     }
   }
 }
