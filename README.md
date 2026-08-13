@@ -1,4 +1,8 @@
-# 随机分组（Random Grouper）
+<p align="center">
+  <img src="assets/icon.png" width="128" alt="GroupShuffle">
+</p>
+
+# GroupShuffle
 
 把一份名单/文本按行随机、平均地分成若干组的 Windows 桌面应用。Electron + 原生 HTML/CSS/JS，**零运行时依赖**，为 10 万+ 行数据做过专门优化。
 
