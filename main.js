@@ -1,14 +1,17 @@
 'use strict';
 
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage, shell } = require('electron');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
+
+const ICON_PATH = path.join(__dirname, 'assets', 'icon.png');
 
 // Windows 记事本 / Excel 友好：UTF-8 BOM + CRLF 行尾
 const BOM = '﻿';
 const MAX_IMPORT_BYTES = 512 * 1024 * 1024;
 
 let win = null;
+let tray = null;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -18,7 +21,7 @@ function createWindow() {
     minHeight: 600,
     show: false,
     title: 'GroupShuffle',
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    icon: ICON_PATH,
     backgroundColor: '#f5f6f8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -32,6 +35,12 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
+
+  // 最小化收进系统托盘（右下角通知区域），而不是留在任务栏
+  win.on('minimize', (event) => {
+    event.preventDefault();
+    win.hide();
+  });
 
   // 排查问题时用 RG_DEBUG=1 启动，可把渲染进程的报错转发到终端
   if (process.env.RG_DEBUG) {
@@ -48,11 +57,36 @@ function createWindow() {
   });
 }
 
+function showWindow() {
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+function createTray() {
+  const icon = nativeImage.createFromPath(ICON_PATH).resize({ width: 16, height: 16 });
+  tray = new Tray(icon);
+  tray.setToolTip('GroupShuffle');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: '显示主窗口', click: showWindow },
+    { type: 'separator' },
+    { label: '退出', click: () => app.quit() },
+  ]));
+  tray.on('click', showWindow);
+  tray.on('double-click', showWindow);
+}
+
 app.whenReady().then(() => {
   createWindow();
+  createTray();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('quit', () => {
+  if (tray) { tray.destroy(); tray = null; } // 不留幽灵图标
 });
 
 app.on('window-all-closed', () => {
