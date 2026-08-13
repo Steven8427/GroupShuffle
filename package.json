@@ -1,0 +1,53 @@
+{
+  "name": "random-grouper",
+  "productName": "RandomGrouper",
+  "version": "1.0.0",
+  "description": "随机、平均分组桌面工具，支持 10 万+ 行数据",
+  "main": "main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.steven.randomgrouper",
+    "productName": "RandomGrouper",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "随机分组"
+    },
+    "portable": {
+      "artifactName": "随机分组-${version}-portable.exe"
+    }
+  }
+}
