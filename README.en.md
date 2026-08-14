@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.1.2-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.2.0-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 
@@ -97,6 +97,8 @@ Knock-on wins: scroll P95 dropped from 22.8 ms to 8.2 ms (inside one frame budge
 | Frequent reflow from the spacer | Small drifts in total height are batched until they exceed 400 px, or until you scroll near the end |
 | Storing input lines | Only the start offset of each line is kept (`Uint32Array`), slicing on demand. 1M lines cost 4 MB as offsets versus 120 MB as strings |
 | Appending content | Only the newly pasted chunk is scanned, never the whole buffer (a full rescan costs 2.1 s at 1M lines) |
+| Row heights after an append | Only the new range is measured; existing rows keep their heights. Re-measuring all 3M rows costs 355 ms — four fifths of a single paste |
+| Slicing strings for grouping | Never happens. `selectNonBlank` scans char codes to pick out non-blank line numbers and slices only when text is needed. Grouping 3M lines went from 519 ms to 217 ms |
 | The browser's height ceiling | Chromium clamps element height at 33,554,428 px and silently truncates past it, leaving the tail unreachable. Above the ceiling the list switches to proportional coordinate mapping — coarser scroll precision, but the end stays reachable |
 
 Measured with 100,000 lines split into 5 groups: 26 ms parsing, 9 ms shuffling, under 1 ms grouping — 46 ms end to end.
@@ -116,7 +118,7 @@ main.js                Main process: window, native dialogs, fs access
 preload.js             contextBridge allowlist (setLang / openTxt / saveTxt / saveAll / reveal)
 renderer/index.html    Markup (copy is tagged with data-i18n, never hardcoded)
 renderer/styles.css    Styles (follows the system light/dark theme)
-renderer/core.js       DOM-free core algorithms (rng / parse / shuffle / grouping / Fenwick)
+renderer/core.js       DOM-free core algorithms (rng / line selection / shuffle / grouping / Fenwick)
 renderer/i18n.js       Language registry and every string, shared by both processes
 renderer/app.js        UI interactions and virtual scrolling
 scripts/make-icon.ps1  Builds the multi-size icon.ico from icon.png

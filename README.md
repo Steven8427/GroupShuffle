@@ -29,7 +29,7 @@ npm run dist
 | 文件 | 说明 |
 |---|---|
 | `GroupShuffle-Setup.exe` | 安装程序，约 92 MB |
-| `GroupShuffle-1.1.2-portable.exe` | 免安装版，单文件双击直接跑 |
+| `GroupShuffle-1.2.0-portable.exe` | 免安装版，单文件双击直接跑 |
 
 安装流程就是普通 Windows 软件那一套：双击 → 安装向导 → 可以改安装目录（默认 `C:\Program Files\GroupShuffle`）→ 自动创建桌面和开始菜单快捷方式 → 装完可勾选立即运行。**目标机器不需要 Node.js 或任何开发环境**，Electron 运行时已经打包在内。
 
@@ -97,6 +97,8 @@ npm run icon
 | 撑高元素频繁重排 | 总高度的小幅漂移攒够 400px 或滚到接近末尾才写回 DOM |
 | 输入行的存储 | 只记每行在原文里的起始下标（`Uint32Array`），取行时按需 slice。100 万行索引占 4MB，切成字符串要 120MB |
 | 追加内容 | 只扫新粘进来的那一块，不重扫全量（100 万行时全量重扫一次要 2.1 秒） |
+| 追加后的行高估算 | 只算新增那一段，已有行的高度原样保留。300 万行时全量重估要 355ms，占单次粘贴耗时的八成 |
+| 分组时的字符串切分 | 不切。`selectNonBlank` 只扫字符码挑出非空白行的行号，要文本时才回原文 slice。300 万行分组 519ms → 217ms |
 | 浏览器的高度上限 | Chromium 把元素高度钳在 33,554,428px，超过就静默截断、尾部滚不到。总高超限时改走等比坐标映射，牺牲滚动精度换取能滚到底 |
 
 实测（10 万行、分 5 组）：解析 26 ms、洗牌 9 ms、分组 <1 ms，端到端 46 ms。
@@ -116,7 +118,7 @@ main.js                主进程：窗口、原生对话框、fs 读写
 preload.js             contextBridge 白名单（setLang / openTxt / saveTxt / saveAll / reveal）
 renderer/index.html    界面结构（文案挂 data-i18n，不写死）
 renderer/styles.css    样式（自动跟随系统深浅色）
-renderer/core.js       与 DOM 无关的核心算法（随机数 / 解析 / 洗牌 / 分组 / Fenwick）
+renderer/core.js       与 DOM 无关的核心算法（随机数 / 选行 / 洗牌 / 分组 / Fenwick）
 renderer/i18n.js       语言注册表 + 全部文案，主进程和渲染进程共用同一份
 renderer/app.js        界面交互与虚拟滚动
 scripts/make-icon.ps1  由 icon.png 生成多尺寸 icon.ico
