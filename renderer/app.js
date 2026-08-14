@@ -86,6 +86,13 @@
   const measureCtx = document.createElement('canvas').getContext('2d');
   const OVERSCAN = 160; // px
   const LIST_MAX_H = 520; // 与 styles.css 的 .vlist max-height 保持一致（约 20 行）
+  /**
+   * 撑高元素的高度上限。Chromium 把元素高度硬钳在 33,554,428px（2^25），
+   * 超过就静默截断 —— 列表尾部会滚不到，且不报任何错。
+   * 100 万行、每行折成两行（46px）时总高 4600 万像素，正好会踩到。
+   * 这里留出余量，超过就改走等比坐标映射。
+   */
+  const MAX_PAD_H = 30000000;
 
   class VList {
     /** @param {number} count 行数 @param {(i:number)=>string} getText 取第 i 行文本 */
@@ -192,6 +199,21 @@
       return Math.min(this.count - 1, Math.max(0, i));
     }
 
+    /**
+     * 把浏览器的滚动位置换算成内容里的虚拟偏移。
+     * 总高没超上限时两者相等，行为和以前完全一样；超了之后按滚动进度等比映射。
+     * 代价是这时一个物理像素对应多个虚拟像素、滚动精度变粗，
+     * 但至少能滚到最后一行 —— 不映射的话尾部是彻底摸不到的。
+     */
+    toVirtual(scrollTop) {
+      const total = this.totalH();
+      if (total <= MAX_PAD_H) return scrollTop;
+      const viewH = this.vp.clientHeight || 0;
+      const physRange = Math.max(1, MAX_PAD_H - viewH);
+      const virtRange = Math.max(0, total - viewH);
+      return Math.min(virtRange, (scrollTop / physRange) * virtRange);
+    }
+
     schedule() {
       if (this.adjusting || this.raf) return;
       this.raf = requestAnimationFrame(() => {
@@ -210,8 +232,13 @@
 
       this.setPadHeight(this.totalH(), false);
 
-      const first = this.indexAt(scrollTop);
-      const limit = scrollTop + viewH + OVERSCAN;
+      // 虚拟坐标（内容里的位置）与 pad 内的实际位置差一个 shift；
+      // 没超高度上限时 shift 恒为 0，等同于以前直接用 offsetOf 定位
+      const vTop = this.toVirtual(scrollTop);
+      const shift = scrollTop - vTop;
+
+      const first = this.indexAt(vTop);
+      const limit = vTop + viewH + OVERSCAN;
       const visible = [];
       let y = this.offsetOf(first);
       for (let i = first; i < this.count && y < limit; i++) {
@@ -233,7 +260,7 @@
         row.hidden = false;
         row.children[0].textContent = i + 1 + '.';
         row.children[1].textContent = this.getText(i);
-        row.style.transform = `translateY(${this.offsetOf(i)}px)`;
+        row.style.transform = `translateY(${this.offsetOf(i) + shift}px)`;
       }
 
       if (!wrapMode) return;
@@ -251,15 +278,17 @@
       }
       if (!changed) return;
 
-      // 校正会挪动后续行的位置，按锚点补偿 scrollTop，避免视觉跳动
+      // 校正会挪动后续行的位置，按锚点补偿 scrollTop，避免视觉跳动。
+      // 超上限走等比映射时 scrollTop 和内容偏移不是一一对应的，补偿没有意义，跳过
       const afterFirst = this.offsetOf(first);
-      if (afterFirst !== beforeFirst && scrollTop > 0) {
+      if (this.totalH() <= MAX_PAD_H && afterFirst !== beforeFirst && scrollTop > 0) {
         this.adjusting = true;
         vp.scrollTop = scrollTop + (afterFirst - beforeFirst);
         this.adjusting = false;
       }
+      const shift2 = vp.scrollTop - this.toVirtual(vp.scrollTop);
       for (let p = 0; p < visible.length; p++) {
-        this.rows[p].style.transform = `translateY(${this.offsetOf(visible[p])}px)`;
+        this.rows[p].style.transform = `translateY(${this.offsetOf(visible[p]) + shift2}px)`;
       }
       this.setPadHeight(this.totalH(), false);
     }
@@ -269,12 +298,13 @@
      * 所以小幅变化先攒着，只有偏差够大、或已经滚到接近末尾时才真正写回。
      */
     setPadHeight(total, force) {
+      const h = Math.min(total, MAX_PAD_H); // 超上限也没用，浏览器会钳掉
       if (!force && this.padH >= 0) {
         const nearEnd = this.vp.scrollTop + this.vp.clientHeight * 3 >= this.padH;
-        if (!nearEnd && Math.abs(total - this.padH) < 400) return;
+        if (!nearEnd && Math.abs(h - this.padH) < 400) return;
       }
-      this.pad.style.height = total + 'px';
-      this.padH = total;
+      this.pad.style.height = h + 'px';
+      this.padH = h;
     }
   }
 
