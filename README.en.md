@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.2.0-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.2.1-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 
@@ -99,6 +99,7 @@ Knock-on wins: scroll P95 dropped from 22.8 ms to 8.2 ms (inside one frame budge
 | Appending content | Only the newly pasted chunk is scanned, never the whole buffer (a full rescan costs 2.1 s at 1M lines) |
 | Row heights after an append | Only the new range is measured; existing rows keep their heights. Re-measuring all 3M rows costs 355 ms — four fifths of a single paste |
 | Slicing strings for grouping | Never happens. `selectNonBlank` scans char codes to pick out non-blank line numbers and slices only when text is needed. Grouping 3M lines went from 519 ms to 217 ms |
+| Perceived startup | The window shows immediately with the theme background rather than waiting for the first paint. Electron runtime boot is irreducible, but the window appears at 496 ms instead of 710 ms |
 | The browser's height ceiling | Chromium clamps element height at 33,554,428 px and silently truncates past it, leaving the tail unreachable. Above the ceiling the list switches to proportional coordinate mapping — coarser scroll precision, but the end stays reachable |
 
 Measured with 100,000 lines split into 5 groups: 26 ms parsing, 9 ms shuffling, under 1 ms grouping — 46 ms end to end.
