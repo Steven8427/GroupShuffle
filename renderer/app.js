@@ -4,12 +4,13 @@
  * GroupShuffle —— 渲染进程
  *
  * 大数据量的三个关键约束：
- *  1. 不复制字符串：items 只保留一份，全程用 Uint32Array 下标操作。
+ *  1. 不复制字符串：正文只有 rawText 一份，行、分组全程用 Uint32Array 下标表示，
+ *     要文本时才按下标回原文 slice。
  *  2. 不阻塞主线程：解析与洗牌按 5 万/批分片，批间让出事件循环。
- *  3. 不堆 DOM：每组一个虚拟列表，只挂载可视区约 30 行。
+ *  3. 不堆 DOM：每组一个虚拟列表，只挂载可视区约 20 行。
  */
 (() => {
-  const { createRng, makeRandBelow, parseItems, shuffle, computeOffsets, Fenwick } = window.RGCore;
+  const { createRng, makeRandBelow, selectNonBlank, shuffle, computeOffsets, Fenwick } = window.RGCore;
   const { t, fmt, setLang, getLang, getName, locale, has, detect, languages } = window.RGI18n;
   const api = window.api || null;
   const $ = (id) => document.getElementById(id);
@@ -42,7 +43,8 @@
     inputPanel: $('input').closest('.panel'),
   };
 
-  /** @type {string[]} */ let items = [];
+  /** 参与分组的行号（已剔除纯空白行）。存行号而不是字符串 */
+  /** @type {Uint32Array|null} */ let itemLines = null;
   /** @type {Uint32Array|null} */ let order = null;   // 打乱后的下标
   /** @type {Uint32Array|null} */ let offsets = null; // 长度 k+1 的组边界
   /** @type {VList[]} */ const lists = [];
@@ -69,7 +71,8 @@
   let lastStats = null;
 
   const groupSize = (g) => offsets[g + 1] - offsets[g];
-  const itemAt = (g, i) => items[order[offsets[g] + i]];
+  // 三层下标：组内序号 → 打乱后的位置 → 原文行号 → 文本
+  const itemAt = (g, i) => lineAt(itemLines[order[offsets[g] + i]]);
 
   function groupText(g, withIndex) {
     const len = groupSize(g);
@@ -553,9 +556,11 @@
     try {
       showProgress(0.02);
       syncRawText();
-      items = await parseItems(rawText, (p) => showProgress(p * 0.35));
+      // 行偏移量在输入阶段就建好了，这里只需挑出非空白行的行号，
+      // 不必把几百万行再切成字符串（300 万行切一遍要 218ms 且常驻几百 MB）
+      itemLines = await selectNonBlank(rawText, lineStarts, (p) => showProgress(p * 0.35));
 
-      const n = items.length;
+      const n = itemLines.length;
       if (n === 0) {
         toast(t('toast.noContent'));
         el.resultPanel.hidden = true;
@@ -572,7 +577,7 @@
       offsets = computeOffsets(n, k, randBelow);
       showProgress(0.92);
 
-      el.cards.classList.toggle('wide', avgLength(items) > 46);
+      el.cards.classList.toggle('wide', avgLength() > 46);
       if (lineCount > COLLAPSE_LINES) collapseInput();
       renderResults();
 
@@ -601,10 +606,17 @@
     });
   }
 
-  function avgLength(arr) {
-    const step = Math.max(1, Math.floor(arr.length / 200));
+  /** 抽样估平均行长，决定结果卡片用窄栏还是宽栏。按下标算长度，不切字符串 */
+  function avgLength() {
+    const n = itemLines.length;
+    const step = Math.max(1, Math.floor(n / 200));
     let sum = 0, cnt = 0;
-    for (let i = 0; i < arr.length; i += step) { sum += arr[i].length; cnt++; }
+    for (let i = 0; i < n; i += step) {
+      const j = itemLines[i];
+      const to = j + 1 < lineStarts.length ? lineStarts[j + 1] - 1 : rawText.length;
+      sum += Math.max(0, to - lineStarts[j]);
+      cnt++;
+    }
     return cnt ? sum / cnt : 0;
   }
 
@@ -811,7 +823,7 @@
     el.input.hidden = false;
     el.collapsedInput.hidden = true;
     el.input.value = '';
-    items = []; order = null; offsets = null; lastStats = null;
+    itemLines = null; order = null; offsets = null; lastStats = null;
     clearResults();
     el.resultPanel.hidden = true;
     updateLineStat();
