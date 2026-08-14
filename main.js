@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 
@@ -26,10 +26,14 @@ function createWindow() {
     height: 820,
     minWidth: 900,
     minHeight: 600,
-    show: false,
+    // 立刻显示，不等渲染进程画完第一帧。Electron 的启动开销大头是运行时自身，
+    // 压不下去；但等 ready-to-show 会把「有反应」这件事又推后约 270ms。
+    // 先显示带底色的空窗口，用户能立刻看到程序起来了
+    show: true,
     title: 'GroupShuffle',
     icon: ICON_PATH,
-    backgroundColor: '#f5f6f8',
+    // 跟着系统深浅色走。写死浅色的话，深色主题下这一瞬间会闪一下白
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#14161a' : '#f5f6f8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -41,7 +45,6 @@ function createWindow() {
 
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  win.once('ready-to-show', () => win.show());
 
   // 最小化收进系统托盘（右下角通知区域），而不是留在任务栏
   win.on('minimize', (event) => {
