@@ -10,7 +10,7 @@
  */
 (() => {
   const { createRng, makeRandBelow, parseItems, shuffle, computeOffsets, Fenwick } = window.RGCore;
-  const { t, fmt, setLang, getLang } = window.RGI18n;
+  const { t, fmt, setLang, getLang, getName, locale, has, detect, languages } = window.RGI18n;
   const api = window.api || null;
   const $ = (id) => document.getElementById(id);
 
@@ -35,7 +35,10 @@
     progress: $('progress'),
     progressBar: $('progressBar'),
     toast: $('toast'),
+    langPick: $('langPick'),
     btnLang: $('btnLang'),
+    langName: $('langName'),
+    langMenu: $('langMenu'),
     inputPanel: $('input').closest('.panel'),
   };
 
@@ -751,17 +754,24 @@
   const LANG_KEY = 'groupshuffle.lang';
 
   function applyI18n() {
-    document.documentElement.lang = getLang() === 'zh' ? 'zh-CN' : 'en';
+    document.documentElement.lang = locale();
     document.querySelectorAll('[data-i18n]').forEach((node) => {
       node.textContent = t(node.dataset.i18n);
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
       node.placeholder = t(node.dataset.i18nPlaceholder);
     });
+    document.querySelectorAll('[data-i18n-title]').forEach((node) => {
+      node.title = t(node.dataset.i18nTitle);
+    });
     el.seg.querySelectorAll('button[data-k]').forEach((btn) => {
       btn.textContent = t('seg.groups', { n: btn.dataset.k });
     });
     el.btnRun.textContent = busy ? t('btn.running') : t('btn.run');
+    el.langName.textContent = getName();
+    el.langMenu.querySelectorAll('[data-code]').forEach((item) => {
+      item.setAttribute('aria-checked', String(item.dataset.code === getLang()));
+    });
     updateLineStat();
     renderResultStat();
     // 结果里的组名/按钮也要换，重建一次卡片即可（数据不动）
@@ -776,11 +786,73 @@
     applyI18n();
   }
 
-  el.btnLang.addEventListener('click', () => switchLang(getLang() === 'zh' ? 'en' : 'zh'));
+  /** 菜单项由注册表生成，加语言不用碰这里 */
+  function buildLangMenu() {
+    const tick = $('tplTick').content.firstElementChild;
+    for (const { code, name } of languages()) {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.setAttribute('role', 'menuitemradio');
+      item.dataset.code = code;
+      const label = document.createElement('span');
+      label.textContent = name; // 母语名，不随界面语言变
+      item.append(label, tick.cloneNode(true));
+      item.addEventListener('click', () => { switchLang(code); closeLangMenu(true); });
+      el.langMenu.appendChild(item);
+    }
+  }
+
+  function openLangMenu() {
+    el.langMenu.hidden = false;
+    el.btnLang.setAttribute('aria-expanded', 'true');
+    const cur = el.langMenu.querySelector('[aria-checked="true"]') || el.langMenu.firstElementChild;
+    if (cur) cur.focus();
+  }
+
+  function closeLangMenu(refocus) {
+    if (el.langMenu.hidden) return;
+    el.langMenu.hidden = true;
+    el.btnLang.setAttribute('aria-expanded', 'false');
+    if (refocus) el.btnLang.focus();
+  }
+
+  el.btnLang.addEventListener('click', () => {
+    if (el.langMenu.hidden) openLangMenu();
+    else closeLangMenu(true);
+  });
+
+  // 点到别处就收起。用 pointerdown 而不是 click：菜单项自己的 click 先跑完，不会打架
+  document.addEventListener('pointerdown', (e) => {
+    if (!el.langMenu.hidden && !el.langPick.contains(e.target)) closeLangMenu(false);
+  });
+
+  el.langPick.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (el.langMenu.hidden) return;
+      e.preventDefault();
+      closeLangMenu(true);
+      return;
+    }
+    if (el.langMenu.hidden) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); openLangMenu(); }
+      return;
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = Array.from(el.langMenu.children);
+    const at = items.indexOf(document.activeElement);
+    const step = e.key === 'ArrowDown' ? 1 : -1;
+    const next = at < 0
+      ? (step > 0 ? 0 : items.length - 1)
+      : (at + step + items.length) % items.length;
+    items[next].focus();
+  });
+
+  buildLangMenu();
 
   let initial = null;
   try { initial = localStorage.getItem(LANG_KEY); } catch (_) { /* 忽略 */ }
-  if (!initial) initial = /^zh\b/i.test(navigator.language || '') ? 'zh' : 'en';
+  if (!initial || !has(initial)) initial = detect(navigator.languages || navigator.language);
   switchLang(initial);
 
   el.input.focus();

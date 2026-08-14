@@ -12,6 +12,7 @@
   --head-bg: #f0f2f5;
   --row-alt: #fafbfc;
   --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+  --shadow-pop: 0 10px 28px rgba(16, 24, 40, .16), 0 2px 6px rgba(16, 24, 40, .08);
   --ok: #16a34a;
   --scroll-thumb: #c3c8d0;
 }
@@ -31,6 +32,7 @@
     --head-bg: #23272e;
     --row-alt: #1f2329;
     --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    --shadow-pop: 0 10px 28px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .4);
     --ok: #4ade80;
     --scroll-thumb: #454d59;
   }
@@ -61,7 +63,7 @@ body {
 }
 
 /* ---------- 顶栏 ---------- */
-/* 单行应用栏：图标 + 标题 + 右侧语言切换，不再放副标题 */
+/* 单行应用栏：图标 + 标题 + 右侧语言选择，不放副标题，留白交给下面的面板 */
 .topbar {
   flex: 0 0 auto;
   display: flex;
@@ -78,17 +80,115 @@ body {
   flex: 0 0 auto;
 }
 
-.topbar .lang {
-  margin-left: auto;
-  min-width: 62px;
-}
-
 .topbar h1 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: .2px;
 }
+
+/* ---------- 语言选择 ---------- */
+.langpick {
+  margin-left: auto;
+  position: relative;
+}
+
+.langbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.langbtn:hover {
+  background: var(--head-bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.langbtn[aria-expanded="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.langbtn .globe {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.langbtn .chev {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  opacity: .65;
+  transition: transform .15s ease;
+}
+
+.langbtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+.langmenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 168px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pop);
+  z-index: 30;
+}
+
+.langmenu[hidden] { display: none; }
+
+.langmenu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.langmenu button:hover,
+.langmenu button:focus-visible {
+  background: var(--head-bg);
+  outline: none;
+}
+
+.langmenu button[aria-checked="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 对勾始终占位，选中与否只切换可见性，菜单项宽度才不会跳 */
+.langmenu .tick {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--accent);
+  visibility: hidden;
+}
+
+.langmenu button[aria-checked="true"] .tick { visibility: visible; }
 
 .progress {
   flex: 0 0 auto;

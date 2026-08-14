@@ -27,7 +27,7 @@
       name: '中文', // 菜单里一律用母语名，不随界面语言变
       locale: 'zh-CN',
       strings: {
-        'lang.toggle': 'English',
+        'lang.label': '切换语言',
 
         'section.input': '输入内容',
         'section.groups': '分组数量',
@@ -96,7 +96,7 @@
       name: 'English',
       locale: 'en-US',
       strings: {
-        'lang.toggle': '中文',
+        'lang.label': 'Change language',
 
         'section.input': 'Input',
         'section.groups': 'Number of groups',
