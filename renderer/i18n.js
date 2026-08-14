@@ -27,7 +27,6 @@
       name: '中文', // 菜单里一律用母语名，不随界面语言变
       locale: 'zh-CN',
       strings: {
-        'app.subtitle': '把名单随机、平均分成若干组 · 支持 10 万+ 行',
         'lang.toggle': 'English',
 
         'section.input': '输入内容',
@@ -97,7 +96,6 @@
       name: 'English',
       locale: 'en-US',
       strings: {
-        'app.subtitle': 'Split a list into random, evenly sized groups · handles 100k+ lines',
         'lang.toggle': '中文',
 
         'section.input': 'Input',
