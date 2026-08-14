@@ -29,7 +29,7 @@ npm run dist
 | 文件 | 说明 |
 |---|---|
 | `GroupShuffle-Setup.exe` | 安装程序，约 92 MB |
-| `GroupShuffle-1.1.1-portable.exe` | 免安装版，单文件双击直接跑 |
+| `GroupShuffle-1.1.2-portable.exe` | 免安装版，单文件双击直接跑 |
 
 安装流程就是普通 Windows 软件那一套：双击 → 安装向导 → 可以改安装目录（默认 `C:\Program Files\GroupShuffle`）→ 自动创建桌面和开始菜单快捷方式 → 装完可勾选立即运行。**目标机器不需要 Node.js 或任何开发环境**，Electron 运行时已经打包在内。
 
@@ -155,3 +155,9 @@ node -e "require('./renderer/core.js').parseItems('a\nb\n\nc').then(r=>console.l
 排查渲染进程报错时，用 `RG_DEBUG=1` 启动，控制台输出会转发到终端。
 
 渲染进程 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`，不直接接触文件系统；所有读写都经由 preload 暴露的五个方法走主进程。
+
+## 许可
+
+**专有软件，保留所有权利。** 未经著作权人事先书面许可，不得使用、复制、修改或分发。
+
+源代码在这里可以浏览，但可浏览不等于获得授权。需要使用请先联系取得许可，完整条款见 [LICENSE](LICENSE)。

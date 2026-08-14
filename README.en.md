@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.1.1-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.1.2-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 
@@ -155,3 +155,9 @@ node -e "require('./renderer/core.js').parseItems('a\nb\n\nc').then(r=>console.l
 To debug renderer errors, start with `RG_DEBUG=1` and its console output is forwarded to the terminal.
 
 The renderer runs with `contextIsolation: true`, `nodeIntegration: false` and `sandbox: true`. It never touches the filesystem directly — every read and write goes through the five methods preload exposes.
+
+## Licence
+
+**Proprietary — all rights reserved.** No use, copying, modification or distribution without the copyright holder's prior written permission.
+
+The source is readable here, but being readable is not a licence. Please obtain permission before using it; full terms in [LICENSE](LICENSE).

@@ -1,11 +1,12 @@
 {
   "name": "groupshuffle",
   "productName": "GroupShuffle",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Split a list into random, evenly sized groups",
   "author": "Steven",
   "main": "main.js",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
   "scripts": {
     "start": "electron .",
     "check-i18n": "node scripts/check-i18n.js",
@@ -32,7 +33,8 @@
       "renderer/**/*",
       "assets/**/*",
       "!assets/icon-source.png",
-      "package.json"
+      "package.json",
+      "LICENSE"
     ],
     "win": {
       "icon": "assets/icon.ico",
@@ -52,6 +54,7 @@
     },
     "nsis": {
       "artifactName": "GroupShuffle-Setup.exe",
+      "license": "LICENSE",
       "oneClick": false,
       "perMachine": true,
       "allowElevation": true,
