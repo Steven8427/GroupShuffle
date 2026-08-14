@@ -623,10 +623,11 @@
   // ==========================================================
   // 交互绑定
   // ==========================================================
-  function countLines(t) {
-    if (!t.length) return 0;
+  // 别用 t 当局部名，它是 i18n 的取词函数
+  function countLines(text) {
+    if (!text.length) return 0;
     let n = 1;
-    for (let i = t.indexOf('\n'); i >= 0; i = t.indexOf('\n', i + 1)) n++;
+    for (let i = text.indexOf('\n'); i >= 0; i = text.indexOf('\n', i + 1)) n++;
     return n;
   }
 
@@ -786,10 +787,11 @@
    * 于是「粘完第一批之后再粘就没反应」。只有挂到 document 才一定收得到。
    */
   document.addEventListener('paste', (e) => {
+    // 注意别用 t 当变量名，它是 i18n 的取词函数，遮蔽了下面的提示就全废了
+    const target = e.target;
     // 焦点在别的输入控件里（比如自定义组数）时不抢
-    const t = e.target;
-    if (t && t !== el.input && !el.inputPanel.contains(t) &&
-        (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (target && target !== el.input && !el.inputPanel.contains(target) &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
 
     const text = e.clipboardData && e.clipboardData.getData('text');
     if (!text) return;
@@ -910,7 +912,8 @@
   });
 
   /** 焦点是否在真正能编辑文字的地方 */
-  const inTextField = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+  const inTextField = (node) =>
+    !!node && (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA' || node.isContentEditable);
 
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); run(); }
