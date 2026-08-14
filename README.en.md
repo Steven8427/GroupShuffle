@@ -24,7 +24,26 @@ npm start
 npm run dist
 ```
 
-Artifacts land in `dist/`: an NSIS installer and a portable exe (both x64). The first build downloads the Electron binaries, so expect it to take a while.
+Artifacts land in `dist/` (both x64):
+
+| File | What it is |
+|---|---|
+| `GroupShuffle-Setup.exe` | Installer, about 92 MB |
+| `GroupShuffle-1.1.0-portable.exe` | Portable single file, just double-click it |
+
+Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
+
+Installing into `Program Files` is a per-machine install, so Windows shows one UAC prompt. For a per-user install with no elevation (into `%LOCALAPPDATA%\Programs`), set `nsis.perMachine` to `false` in `package.json`.
+
+The installer, uninstaller, desktop shortcut and Start menu entry all use `assets/icon.ico`. Regenerate it after changing `assets/icon.png`:
+
+```bash
+npm run icon
+```
+
+The first build downloads the Electron binaries and NSIS resources, so expect it to take a while; later builds hit the cache and finish in under a minute.
+
+> The build is not code-signed, so Windows SmartScreen warns on first run ("More info → Run anyway"). Removing that prompt requires a code signing certificate — hand it to electron-builder through `CSC_LINK` / `CSC_KEY_PASSWORD`.
 
 ## Features
 
@@ -36,7 +55,7 @@ Artifacts land in `dist/`: an NSIS installer and a portable exe (both x64). The 
 - "Wrap long lines" toggle; turn it off to truncate to a single line, which is the cheapest to scroll
 - Import TXT: pick a file, or just drop a `.txt` onto the input area
 - `Ctrl + Enter` to shuffle
-- **One-click 中文 / English switch** in the top right. The choice is stored in localStorage and defaults to your system language. Native dialogs and the tray menu follow it too
+- **Language picker** behind the 🌐 icon in the top right; every language is listed under its own endonym (中文 / English). The choice is stored in localStorage and defaults to your system language, and native dialogs plus the tray menu follow along
 - **Minimizes to the system tray** (notification area) instead of the taskbar; click the tray icon to restore, right-click for "Show window / Quit"
 - **Closing the window asks for confirmation**, so a stray click won't throw away your grouping. Tray "Quit" and system shutdown are explicit, so they don't ask twice
 - Scrollbars follow the light/dark theme instead of the glaring default white bar
@@ -85,16 +104,39 @@ node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.c
 ## Layout
 
 ```
-main.js              Main process: window, native dialogs, fs access
-preload.js           contextBridge allowlist (setLang / openTxt / saveTxt / saveAll / reveal)
-renderer/index.html  Markup (copy is tagged with data-i18n, never hardcoded)
-renderer/styles.css  Styles (follows the system light/dark theme)
-renderer/core.js     DOM-free core algorithms (rng / parse / shuffle / grouping / Fenwick)
-renderer/i18n.js     Chinese and English string tables
-renderer/app.js      UI interactions and virtual scrolling
+main.js                Main process: window, native dialogs, fs access
+preload.js             contextBridge allowlist (setLang / openTxt / saveTxt / saveAll / reveal)
+renderer/index.html    Markup (copy is tagged with data-i18n, never hardcoded)
+renderer/styles.css    Styles (follows the system light/dark theme)
+renderer/core.js       DOM-free core algorithms (rng / parse / shuffle / grouping / Fenwick)
+renderer/i18n.js       Language registry and every string, shared by both processes
+renderer/app.js        UI interactions and virtual scrolling
+scripts/make-icon.ps1  Builds the multi-size icon.ico from icon.png
+scripts/check-i18n.js  Checks that every language has matching keys and placeholders
 ```
 
-All UI copy goes through `renderer/i18n.js`. The main process keeps its own small table for native dialogs and the tray menu; the renderer pushes language changes across via `app:setLang`.
+## Adding a language
+
+Everything lives in the `LANGS` array in `renderer/i18n.js` — append one entry:
+
+```js
+{ code: 'ja', name: '日本語', locale: 'ja-JP', strings: { /* copy zh's keys, translate each */ } }
+```
+
+The language menu, system language detection and number formatting all pick it up automatically, and **no other file needs a single line changed**. A few deliberate choices:
+
+- The menu always shows the **endonym** (日本語, not "Japanese") so users can find their language whatever the current UI language is
+- System language matching only compares the BCP-47 primary subtag: `ja-JP` hits `ja`, and `zh-TW` / `zh-Hans-CN` both hit `zh`
+- Keys missing from `strings` fall back to Chinese rather than exposing a raw key, so a half-finished translation is safe to merge
+- Keys prefixed `main.` belong to the main process (native dialogs, tray menu). It `require`s the same table, so the two can never drift apart
+
+Run the completeness check once you're done — a missing key just silently reverts one line of the UI to Chinese, which is easy to miss:
+
+```bash
+npm run check-i18n
+```
+
+It reports missing keys, stray keys, and mismatched placeholders (a translation that drops `{n}` would never show the number).
 
 `core.js` has no DOM dependencies, so you can `require` it straight from Node to test:
 

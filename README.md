@@ -24,7 +24,26 @@ npm start
 npm run dist
 ```
 
-产物在 `dist/`：NSIS 安装包 + portable 免安装 exe（均为 x64）。首次打包需要下载 Electron 二进制，耗时较长。
+产物在 `dist/`（均为 x64）：
+
+| 文件 | 说明 |
+|---|---|
+| `GroupShuffle-Setup.exe` | 安装程序，约 92 MB |
+| `GroupShuffle-1.1.0-portable.exe` | 免安装版，单文件双击直接跑 |
+
+安装流程就是普通 Windows 软件那一套：双击 → 安装向导 → 可以改安装目录（默认 `C:\Program Files\GroupShuffle`）→ 自动创建桌面和开始菜单快捷方式 → 装完可勾选立即运行。**目标机器不需要 Node.js 或任何开发环境**，Electron 运行时已经打包在内。
+
+装到 `Program Files` 是全机器安装，会弹一次 UAC 提权。想改成免提权的当前用户安装（装到 `%LOCALAPPDATA%\Programs`），把 `package.json` 里 `nsis.perMachine` 改成 `false` 即可。
+
+安装程序、卸载程序、桌面快捷方式、开始菜单用的都是 `assets/icon.ico`。改了 `assets/icon.png` 之后重新生成一次：
+
+```bash
+npm run icon
+```
+
+首次打包需要下载 Electron 二进制和 NSIS 资源，耗时较长；之后走缓存，一分钟内。
+
+> 没有做代码签名，所以 Windows SmartScreen 首次运行会拦一下（「更多信息 → 仍要运行」）。要去掉这个提示需要买代码签名证书，把 `CSC_LINK` / `CSC_KEY_PASSWORD` 交给 electron-builder 即可。
 
 ## 功能
 
@@ -36,7 +55,7 @@ npm run dist
 - 「长内容自动换行」开关；关闭后长行单行截断，滚动最省资源
 - 导入 TXT：点按钮选文件，或直接把 `.txt` 拖到输入区
 - `Ctrl + Enter` 快速分组
-- **中文 / English 一键切换**，右上角按钮；选择记在 localStorage，首次按系统语言判断。原生对话框和托盘菜单也跟着切
+- **多语言切换**：右上角 🌐 图标点开菜单，语言一律用母语名列出（中文 / English）。选择记在 localStorage，首次按系统语言判断；原生对话框和托盘菜单跟着一起切
 - **最小化收进系统托盘**（右下角通知区域），不占任务栏；点托盘图标恢复，右键可「显示主窗口 / 退出」
 - **关闭窗口有二次确认**，误触不会丢掉分组结果；托盘「退出」和系统关机是明确意图，不重复问
 - 滚动条跟随深浅色主题，不再是默认那条扎眼的亮白条
@@ -85,16 +104,39 @@ node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.c
 ## 结构
 
 ```
-main.js              主进程：窗口、原生对话框、fs 读写
-preload.js           contextBridge 白名单（setLang / openTxt / saveTxt / saveAll / reveal）
-renderer/index.html  界面结构（文案挂 data-i18n，不写死）
-renderer/styles.css  样式（自动跟随系统深浅色）
-renderer/core.js     与 DOM 无关的核心算法（随机数 / 解析 / 洗牌 / 分组 / Fenwick）
-renderer/i18n.js     中英文文案字典
-renderer/app.js      界面交互与虚拟滚动
+main.js                主进程：窗口、原生对话框、fs 读写
+preload.js             contextBridge 白名单（setLang / openTxt / saveTxt / saveAll / reveal）
+renderer/index.html    界面结构（文案挂 data-i18n，不写死）
+renderer/styles.css    样式（自动跟随系统深浅色）
+renderer/core.js       与 DOM 无关的核心算法（随机数 / 解析 / 洗牌 / 分组 / Fenwick）
+renderer/i18n.js       语言注册表 + 全部文案，主进程和渲染进程共用同一份
+renderer/app.js        界面交互与虚拟滚动
+scripts/make-icon.ps1  由 icon.png 生成多尺寸 icon.ico
+scripts/check-i18n.js  校验各语言的键与占位符是否对齐
 ```
 
-文案统一走 `renderer/i18n.js`；主进程另有一份小字典管原生对话框和托盘，渲染进程切语言时通过 `app:setLang` 同步过去。
+## 添加一门语言
+
+改动集中在 `renderer/i18n.js` 的 `LANGS` 数组，追加一条就够：
+
+```js
+{ code: 'ja', name: '日本語', locale: 'ja-JP', strings: { /* 照抄 zh 的键逐条翻译 */ } }
+```
+
+语言菜单、系统语言检测、数字千分位都会自动带上它，**其他文件一行都不用改**。几个设计上的取舍：
+
+- 菜单里一律用**母语名**（日本語 而不是「日语」），这样用户在任何界面语言下都能找到自己那门
+- 系统语言只比 BCP-47 的主子标签，`ja-JP` 命中 `ja`，`zh-TW` / `zh-Hans-CN` 都命中 `zh`
+- `strings` 缺的键回落到中文而不是露出裸 key，所以新语言可以先翻一半就合入
+- `main.*` 前缀的键归主进程（原生对话框、托盘菜单），主进程 `require` 的是同一份表，不存在两份字典对不上的问题
+
+翻完跑一下完整性校验 —— 缺键只会让界面上某一行悄悄变回中文，肉眼很难发现：
+
+```bash
+npm run check-i18n
+```
+
+它会报出缺键、多余键，以及占位符对不上的条目（比如翻译里漏掉 `{n}`，数字就永远显示不出来）。
 
 `core.js` 不依赖任何 DOM，可以直接在 Node 里 `require` 出来测：
 
