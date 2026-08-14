@@ -211,5 +211,8 @@
     getName: () => current.name,
     locale: () => current.locale,
     has: (code) => byCode.has(code),
+    // 下面两个只给 scripts/check-i18n.js 用
+    fallbackCode: FALLBACK,
+    stringsOf: (code) => Object.assign({}, (byCode.get(code) || fallback).strings),
   };
 });
