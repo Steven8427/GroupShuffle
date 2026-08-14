@@ -463,6 +463,10 @@ textarea#input:focus { border-color: var(--accent); }
   max-width: 80vw;
 }
 
+/* 作者样式的 display 会盖掉浏览器默认的 [hidden] { display: none }，
+   不补这条的话空 toast 会一直挂在窗口底部 */
+.toast[hidden] { display: none; }
+
 .toast button {
   border: 1px solid currentColor;
   background: transparent;
