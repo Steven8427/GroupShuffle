@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.1.0-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.1.1-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 
@@ -66,17 +66,22 @@ Exported files are **UTF-8 with BOM and CRLF line endings**, so Notepad and Exce
 
 Whether the input is 10 lines or 100,000, the UI **mounts only the ~20 visible rows** and renders the rest on demand as you scroll — this applies to both the input preview and every group card. With 100,000 lines split into 5 groups, the whole window holds around 100 row nodes. Lists shorter than 20 rows shrink to fit instead of leaving blank space.
 
-### Large inputs collapse automatically
+### Large content never reaches the text box
 
-Above 5,000 lines the input no longer goes into the `<textarea>`. It collapses into a **scrollable read-only preview** (with an "N lines loaded" header); the text itself lives in memory and grouping works exactly the same. Click "Edit" to put it back into a real text box.
+Above 5,000 lines the input no longer goes into the `<textarea>`. It collapses into a **scrollable read-only preview** (with an "N lines loaded" header); the text itself lives in memory and grouping works exactly the same. While collapsed you can **keep pasting and the content is appended** — no need to expand first. Up to 50,000 lines you can still click "Edit" to put it back into a real text box.
 
-This isn't a shortcut — it's the single biggest performance trap in this app. A native text control holding 100,000 lines is 2 million pixels tall internally, and **laying it out alone costs 2.6 seconds**. Worse, every time the virtual list resizes its spacer, that text control gets relaid out along with it. Measured:
+This is the single biggest performance trap in the app: native text-control layout is synchronous, so it cannot be chunked, and once laid out, a spacer tens of millions of pixels tall drags on every window drag and scroll.
 
-| Scenario | Before collapsing | After |
-|---|---|---|
-| First layout after pasting 100k lines | 2615 ms | **4 ms** |
-| Clicking "Shuffle & split" until results appear | 3677 ms | **46 ms** |
-| One scroll frame in the results list | 600–1100 ms | **≤ 5 ms** |
+The rule is "how big will it be after the paste", not "how was it pasted". Early versions only intercepted whole-content replacement, so a paste appended at the end slipped through — exactly the pattern of pasting 100k lines at a time and building up. Measured UI freeze per paste:
+
+| Accumulated | Before | After |
+|---:|---:|---:|
+| 100k | 961 ms | **29 ms** |
+| 500k | 5620 ms | **69 ms** |
+| 1M | 10152 ms | **141 ms** |
+| **10 rounds total** | **~53 s** | **0.8 s** |
+
+Knock-on wins: scroll P95 dropped from 22.8 ms to 8.2 ms (inside one frame budget), memory from 415 MB to 273 MB, and clicking "Edit" went from a 15.7-second freeze to a 155 ms message.
 
 ## Performance design
 
@@ -90,6 +95,9 @@ This isn't a shortcut — it's the single biggest performance trap in this app. 
 | DOM blowup | One virtual list for the input preview and one per group, mounting only the ~20 visible rows with a reused node pool; with many groups the cards mount lazily, reserving height beforehand so they don't collapse and pop |
 | Variable row heights from wrapping | Heights in a `Uint16Array` plus a Fenwick tree for prefix sums, giving O(log n) lookups; estimates are corrected against measured heights and `scrollTop` is compensated so scrolling doesn't jump |
 | Frequent reflow from the spacer | Small drifts in total height are batched until they exceed 400 px, or until you scroll near the end |
+| Storing input lines | Only the start offset of each line is kept (`Uint32Array`), slicing on demand. 1M lines cost 4 MB as offsets versus 120 MB as strings |
+| Appending content | Only the newly pasted chunk is scanned, never the whole buffer (a full rescan costs 2.1 s at 1M lines) |
+| The browser's height ceiling | Chromium clamps element height at 33,554,428 px and silently truncates past it, leaving the tail unreachable. Above the ceiling the list switches to proportional coordinate mapping — coarser scroll precision, but the end stays reachable |
 
 Measured with 100,000 lines split into 5 groups: 26 ms parsing, 9 ms shuffling, under 1 ms grouping — 46 ms end to end.
 
