@@ -158,14 +158,13 @@
       row.remove();
     }
 
-    buildHeights() {
-      const n = this.count;
-      const heights = new Uint16Array(n);
+    /** 估算 [from, to) 这些行的高度写进 heights，整个类里最贵的一步 */
+    measureInto(heights, from, to) {
       const avail = Math.max(40, this.availW);
       const unit = this.unitW;
       const base = this.baseH;
       const lineH = this.lineH;
-      for (let i = 0; i < n; i++) {
+      for (let i = from; i < to; i++) {
         const s = this.getText(i);
         let units = 0;
         // 粗估宽度：CJK / 全角按 2 个字符宽算
@@ -173,9 +172,41 @@
         const lines = Math.max(1, Math.ceil((units * unit) / avail));
         heights[i] = Math.min(65535, Math.round(base + (lines - 1) * lineH));
       }
+    }
+
+    buildHeights() {
+      const heights = new Uint16Array(this.count);
+      this.measureInto(heights, 0, this.count);
       this.heights = heights;
-      this.fen = new Fenwick(n);
+      this.fen = new Fenwick(this.count);
       this.fen.build(heights);
+    }
+
+    /**
+     * 行数变多时只算新增那一段的行高。
+     *
+     * 已有行的内容和宽度都没变，高度自然也没变，重算一遍是纯浪费：
+     * 300 万行时全量估算要 355ms，而每次粘贴只新增 10 万行。
+     * Fenwick 得整棵重建，但那是纯数组运算，300 万行只要 13ms。
+     */
+    grow(count) {
+      if (count <= this.count) return;
+      const from = this.count;
+      this.count = count;
+      if (!this.mounted) return; // 还没挂载，等 mount 时一次性算
+      if (wrapMode && this.heights) {
+        const heights = new Uint16Array(count);
+        heights.set(this.heights);
+        this.measureInto(heights, from, count);
+        this.heights = heights;
+        this.fen = new Fenwick(count);
+        this.fen.build(heights);
+      } else if (wrapMode) {
+        this.buildHeights();
+      }
+      this.padH = -1;
+      this.render();
+      this.setPadHeight(this.totalH(), true);
     }
 
     relayout(force) {
@@ -660,16 +691,33 @@
     buildPreview();
   }
 
+  /** 原文以换行结尾时末尾会多出一个空行，不显示它 */
+  function countPreviewRows() {
+    let n = lineCount;
+    if (n > 0 && lineStarts[n - 1] >= rawText.length) n--;
+    return n;
+  }
+
   /** 折叠后仍然要能看内容：同一套虚拟列表，只挂载可见的十几行 */
   function buildPreview() {
     destroyPreview();
-    // 原文以换行结尾时末尾会多出一个空行，不显示它
-    previewCount = lineCount;
-    if (previewCount > 0 && lineStarts[previewCount - 1] >= rawText.length) previewCount--;
+    previewCount = countPreviewRows();
     el.previewList.classList.toggle('nowrap', !wrapMode);
     el.previewList.style.setProperty('--idxw', String(previewCount).length * 7 + 4 + 'px');
     previewList = new VList(el.previewList, el.previewList.querySelector('.vpad'), previewCount, lineAt);
     previewList.mount();
+  }
+
+  /**
+   * 追加之后让预览接着往下长，而不是推倒重建。
+   * 重建会把已有行的高度重算一遍 —— 300 万行时那一步就要 355ms，
+   * 占了单次粘贴耗时的八成，而且随累计总量线性增长。
+   */
+  function growPreview() {
+    if (!previewList) { buildPreview(); return; }
+    previewCount = countPreviewRows();
+    el.previewList.style.setProperty('--idxw', String(previewCount).length * 7 + 4 + 'px');
+    previewList.grow(previewCount);
   }
 
   function destroyPreview() {
@@ -729,7 +777,7 @@
       // 换成替换会把已经攒了几十万行的内容悄悄冲掉
       e.preventDefault();
       const added = appendRaw(text);
-      buildPreview();
+      growPreview();
       updateLineStat();
       toast(t('toast.appended', { n: fmt(added), total: fmt(lineCount) }));
       return;
