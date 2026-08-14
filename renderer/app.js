@@ -52,6 +52,9 @@
   // 输入超过这个行数就折叠：一个几十万像素高的 textarea 会让
   // 虚拟列表每次撑高都连带重排整个文本框（实测 600~900ms/次）
   const COLLAPSE_LINES = 5000;
+  // 超过这个行数不再放回 textarea。实测原生排版：10 万行 0.9 秒、100 万行 8 秒，
+  // 而且排完之后那个两千万像素高的布局会一直拖累窗口拖动和滚动
+  const EXPAND_MAX_LINES = 50000;
   let rawText = '';
   let lineCount = 0;
   /**
@@ -650,7 +653,12 @@
 
   async function expandInput() {
     if (!collapsed) return;
-    // 把大文本放回文本框必然要付一次原生排版的钱，先让提示画出来再动手
+    // 放回 textarea 要付一次原生排版的钱，而且排完那个几千万像素高的布局
+    // 会一直拖累窗口拖动和滚动。超过上限就不做，内容照样能分组
+    if (lineCount > EXPAND_MAX_LINES) {
+      toast(t('toast.tooLargeToEdit', { n: fmt(lineCount), max: fmt(EXPAND_MAX_LINES) }));
+      return;
+    }
     if (lineCount > 20000) {
       toast(t('toast.expanding', { n: fmt(lineCount) }));
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));

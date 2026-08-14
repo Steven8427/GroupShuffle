@@ -73,6 +73,7 @@
         'toast.expanding': '正在展开 {n} 行，可能需要几秒…',
         'toast.appended': '已追加 {n} 行，共 {total} 行',
         'toast.collapsedNow': '内容较多，已切换到预览模式（共 {n} 行）',
+        'toast.tooLargeToEdit': '{n} 行放回文本框会让界面卡住数秒，已超过 {max} 行上限。内容仍可正常分组；要重新开始请点「清空」',
 
         'main.openTitle': '选择要分组的文本文件',
         'main.filterText': '文本文件',
@@ -144,6 +145,7 @@
         'toast.expanding': 'Expanding {n} lines, this may take a few seconds…',
         'toast.appended': 'Appended {n} lines — {total} total',
         'toast.collapsedNow': 'Switched to preview mode ({n} lines)',
+        'toast.tooLargeToEdit': 'Putting {n} lines back into a text box would freeze the UI for seconds — past the {max} line limit. Grouping still works; use "Clear" to start over',
 
         'main.openTitle': 'Choose a text file to split',
         'main.filterText': 'Text files',
