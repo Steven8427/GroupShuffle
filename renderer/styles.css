@@ -352,6 +352,7 @@ textarea#input:focus { border-color: var(--accent); }
 
 .collapsed-head .hint { margin-left: 0; }
 .collapsed-head .btn { margin-left: auto; }
+.collapsed-head .btn + .btn { margin-left: 6px; }
 
 .vlist.preview { background: var(--panel); }
 

@@ -28,6 +28,7 @@
     collapsedInput: $('collapsedInput'),
     collapsedText: $('collapsedText'),
     btnExpand: $('btnExpand'),
+    btnCopyAll: $('btnCopyAll'),
     previewList: $('previewList'),
     resultPanel: $('resultPanel'),
     resultStat: $('resultStat'),
@@ -773,6 +774,18 @@
   });
 
   el.btnExpand.addEventListener('click', expandInput);
+
+  /**
+   * 折叠态下几百万行没法用「全选」取出来 —— 虚拟列表里只有二十来行真的存在，
+   * 选中的永远是残缺的。直接把正文整份写进剪贴板，这才是用户按 Ctrl+A 想要的东西。
+   */
+  el.btnCopyAll.addEventListener('click', async () => {
+    if (!rawText) return;
+    syncRawText();
+    const ok = await writeClipboard(rawText);
+    if (ok) flash(el.btnCopyAll, t('toast.copied'));
+    else toast(t('toast.copyFail'));
+  });
 
   /**
    * 大内容永远不进 textarea。
