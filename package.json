@@ -1,8 +1,9 @@
 {
   "name": "groupshuffle",
   "productName": "GroupShuffle",
-  "version": "1.0.0",
-  "description": "随机、平均分组桌面工具，支持 10 万+ 行数据",
+  "version": "1.1.0",
+  "description": "Split a list into random, evenly sized groups",
+  "author": "Steven",
   "main": "main.js",
   "license": "MIT",
   "scripts": {
@@ -19,19 +20,25 @@
   "build": {
     "appId": "com.steven.groupshuffle",
     "productName": "GroupShuffle",
+    "copyright": "Copyright © 2026 Steven",
     "asar": true,
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "assets"
     },
     "files": [
       "main.js",
       "preload.js",
       "renderer/**/*",
       "assets/**/*",
+      "!assets/icon-source.png",
       "package.json"
     ],
     "win": {
       "icon": "assets/icon.ico",
+      "signtoolOptions": {
+        "publisherName": "Steven"
+      },
       "target": [
         {
           "target": "nsis",
@@ -44,11 +51,21 @@
       ]
     },
     "nsis": {
+      "artifactName": "GroupShuffle-Setup.exe",
       "oneClick": false,
-      "perMachine": false,
+      "perMachine": true,
+      "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "GroupShuffle"
+      "createStartMenuShortcut": true,
+      "shortcutName": "GroupShuffle",
+      "menuCategory": false,
+      "runAfterFinish": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "uninstallDisplayName": "GroupShuffle",
+      "deleteAppDataOnUninstall": false
     },
     "portable": {
       "artifactName": "GroupShuffle-${version}-portable.exe"
