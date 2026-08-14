@@ -108,7 +108,7 @@ Measured with 100,000 lines split into 5 groups: 26 ms parsing, 9 ms shuffling, 
 Write 100,000 long lines, then load the file with "Import TXT":
 
 ```bash
-node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.com:3128:user'+i+':7u1aHTqmZBWjBArn-S'+Math.random().toString(16).slice(2)+'-walmart-US');require('fs').writeFileSync('sample-100k.txt',a.join('\r\n'),'utf8')"
+node -e "const a=[];for(let i=0;i<100000;i++)a.push('proxy-pool.example.com:3128:user'+i+':password-placeholder-'+Math.random().toString(16).slice(2)+'-region-US');require('fs').writeFileSync('sample-100k.txt',a.join('\r\n'),'utf8')"
 ```
 
 ## Layout

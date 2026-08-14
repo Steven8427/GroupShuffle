@@ -108,7 +108,7 @@ npm run icon
 在 PowerShell 里生成 10 万行长文本，然后用「导入 TXT」载入：
 
 ```bash
-node -e "const a=[];for(let i=0;i<100000;i++)a.push('residential.wealthproxies.com:3128:user'+i+':7u1aHTqmZBWjBArn-S'+Math.random().toString(16).slice(2)+'-walmart-US');require('fs').writeFileSync('sample-100k.txt',a.join('\r\n'),'utf8')"
+node -e "const a=[];for(let i=0;i<100000;i++)a.push('proxy-pool.example.com:3128:user'+i+':password-placeholder-'+Math.random().toString(16).slice(2)+'-region-US');require('fs').writeFileSync('sample-100k.txt',a.join('\r\n'),'utf8')"
 ```
 
 ## 结构
