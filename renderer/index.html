@@ -60,9 +60,13 @@
           <button class="btn mini" id="btnExpand" type="button" data-i18n="btn.expand"></button>
         </div>
         <div class="vlist preview" id="previewList"><div class="vpad"></div></div>
-        <!-- 闪烁的光标条：折叠后没有真正的文本框，得让用户看出这里还能继续粘 -->
+        <!-- 折叠后没有真正的文本框，用这条提示让用户看出这里还能继续粘 -->
         <div class="paste-bar">
-          <span class="caret"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="8" y="3" width="8" height="4" rx="1"></rect>
+            <path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"></path>
+          </svg>
           <span data-i18n="collapsed.pasteHere"></span>
         </div>
       </div>

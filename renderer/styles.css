@@ -323,22 +323,12 @@ textarea#input:focus { border-color: var(--accent); }
   user-select: none;
 }
 
-/* 模拟文本光标。折叠态没有真正的输入控件，只能画一根 */
-.paste-bar .caret {
-  display: inline-block;
-  width: 1px;
+/* 剪贴板图标。原来画的是一根模拟光标的竖线，孤零零一条看着像多余的符号 */
+.paste-bar svg {
+  width: 14px;
   height: 14px;
-  background: var(--text);
-  animation: caret-blink 1.1s step-end infinite;
-}
-
-@keyframes caret-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .paste-bar .caret { animation: none; }
+  flex: 0 0 auto;
+  opacity: .8;
 }
 
 .collapsed-head {
