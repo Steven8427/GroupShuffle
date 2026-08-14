@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron .",
     "check-i18n": "node scripts/check-i18n.js",
+    "icon": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-icon.ps1",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --win"
   },
@@ -30,7 +31,7 @@
       "package.json"
     ],
     "win": {
-      "icon": "assets/icon.png",
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "nsis",
