@@ -678,6 +678,8 @@
     syncRawText();
     el.lineStat.textContent = t('stat.lines', { n: fmt(lineCount) });
     el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
+    // 超过上限点了也会被拒，不如不显示，省得看见按钮以为能编辑
+    el.btnExpand.hidden = lineCount > EXPAND_MAX_LINES;
   }
 
   function collapseInput() {

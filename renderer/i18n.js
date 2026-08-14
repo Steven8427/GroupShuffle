@@ -38,7 +38,7 @@
         'input.placeholder': '每行一个内容，例如：\nJason\nSteven\nMike\n\n也可以直接把 .txt 文件拖到这里',
         'drop.hint': '松开即可导入',
         'collapsed.loaded': '已载入 {n} 行',
-        'collapsed.hint': '只渲染可见的十几行，下面可以直接滚动查看',
+        'collapsed.hint': '只渲染可见的十几行，可直接滚动查看；继续粘贴会追加到末尾',
         'btn.expand': '编辑内容',
 
         'seg.groups': '{n} 组',
@@ -110,7 +110,7 @@
         'input.placeholder': 'One item per line, e.g.\nJason\nSteven\nMike\n\nYou can also drop a .txt file here',
         'drop.hint': 'Drop to import',
         'collapsed.loaded': '{n} lines loaded',
-        'collapsed.hint': 'Only the visible rows are rendered — scroll below to browse',
+        'collapsed.hint': 'Only the visible rows are rendered — scroll to browse; pasting more appends to the end',
         'btn.expand': 'Edit',
 
         'seg.groups': '{n} groups',
