@@ -71,6 +71,8 @@
         'toast.imported': '已导入 {n} 行',
         'toast.emptyGroups': '只有 {n} 项，有 {k} 个组为空',
         'toast.expanding': '正在展开 {n} 行，可能需要几秒…',
+        'toast.appended': '已追加 {n} 行，共 {total} 行',
+        'toast.collapsedNow': '内容较多，已切换到预览模式（共 {n} 行）',
 
         'main.openTitle': '选择要分组的文本文件',
         'main.filterText': '文本文件',
@@ -140,6 +142,8 @@
         'toast.imported': 'Imported {n} lines',
         'toast.emptyGroups': 'Only {n} items — {k} groups are empty',
         'toast.expanding': 'Expanding {n} lines, this may take a few seconds…',
+        'toast.appended': 'Appended {n} lines — {total} total',
+        'toast.collapsedNow': 'Switched to preview mode ({n} lines)',
 
         'main.openTitle': 'Choose a text file to split',
         'main.filterText': 'Text files',

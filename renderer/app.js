@@ -577,6 +577,33 @@
     lineCount = lineStarts.length;
   }
 
+  /**
+   * 追加一段内容，只扫新增的那一块。
+   * 每次粘贴都重扫全量是「一次一次加、加到后面越来越卡」的另一半原因：
+   * 攒到 100 万行时，单次粘贴光数行数就要 2.1 秒。
+   */
+  function appendRaw(chunk) {
+    if (!chunk) return 0;
+    if (rawText.length && rawText.charCodeAt(rawText.length - 1) !== 10) rawText += '\n';
+    const base = rawText.length;
+    const added = countLines(chunk);
+    const starts = new Uint32Array(added);
+    starts[0] = base;
+    let k = 1;
+    for (let i = chunk.indexOf('\n'); i >= 0; i = chunk.indexOf('\n', i + 1)) starts[k++] = base + i + 1;
+    rawText += chunk;
+
+    const old = lineStarts;
+    // 原文以换行结尾时，尾部那个空行的起点正好被新块第一行顶替，去重
+    const keep = old && old.length && old[old.length - 1] === base ? old.length - 1 : (old ? old.length : 0);
+    const next = new Uint32Array(keep + added);
+    if (keep) next.set(old.subarray(0, keep));
+    next.set(starts, keep);
+    lineStarts = next;
+    lineCount = next.length;
+    return added;
+  }
+
   /** 折叠状态下正文在 rawText 里，展开状态下以 textarea 为准 */
   function syncRawText() {
     if (!collapsed) setRaw(el.input.value);
@@ -645,19 +672,38 @@
   el.btnExpand.addEventListener('click', expandInput);
 
   /**
-   * 超大内容直接进 rawText，绕开 textarea。
-   * 原生文本控件排版 10 万行要 2.6 秒（内部高度 200 万像素），
-   * 拦下这一步，粘贴才不会整窗口卡住。
+   * 大内容永远不进 textarea。
+   *
+   * 判断标准是「粘完之后有多大」，不是「怎么粘的」。早先只拦整体替换，
+   * 在末尾追加的粘贴从缝里溜过去 —— 于是 10 万行一次地累加时文本框一路涨到
+   * 100 万行、内部两千万像素高，每次粘贴同步重排 8 秒，排完之后连拖动窗口
+   * 和滚动都一直被这个巨型布局拖着。
+   *
+   * 挂在整个输入面板而不是 textarea 上：折叠态下 textarea 是隐藏的，
+   * 但用户还要继续往里粘。
    */
-  el.input.addEventListener('paste', (e) => {
+  el.inputPanel.addEventListener('paste', (e) => {
     const text = e.clipboardData && e.clipboardData.getData('text');
-    if (!text || countLines(text) <= COLLAPSE_LINES) return;
-    const cur = el.input.value;
-    const replacingAll = cur.length === 0 ||
-      (el.input.selectionStart === 0 && el.input.selectionEnd === cur.length);
-    if (!replacingAll) return; // 往已有内容中间插入的复杂情况交回浏览器
+    if (!text) return;
+
+    if (collapsed) {
+      // 折叠态没有光标可言，粘贴一律理解为追加。
+      // 换成替换会把已经攒了几十万行的内容悄悄冲掉
+      e.preventDefault();
+      const added = appendRaw(text);
+      buildPreview();
+      updateLineStat();
+      toast(t('toast.appended', { n: fmt(added), total: fmt(lineCount) }));
+      return;
+    }
+
+    // 展开态：粘完仍在阈值内就交回浏览器，小输入照常编辑
+    if (lineCount + countLines(text) <= COLLAPSE_LINES) return;
     e.preventDefault();
-    setInputText(text);
+    const cur = el.input.value;
+    const merged = cur.slice(0, el.input.selectionStart) + text + cur.slice(el.input.selectionEnd);
+    loadText(merged);
+    toast(t('toast.collapsedNow', { n: fmt(lineCount) }));
   });
 
   el.seg.addEventListener('click', (e) => {
