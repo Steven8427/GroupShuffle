@@ -4,3 +4,6 @@ dist/
 
 # README 里那条命令生成的测试数据
 sample-*.txt
+
+# 在仓库目录里试导出时应用写出的分组文件
+group-*.txt
