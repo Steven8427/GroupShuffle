@@ -49,13 +49,18 @@
   let wrapMode = true;
   let busy = false;
 
-  // 输入超过这个行数就在分组后折叠：一个几十万像素高的 textarea 会让
+  // 输入超过这个行数就折叠：一个几十万像素高的 textarea 会让
   // 虚拟列表每次撑高都连带重排整个文本框（实测 600~900ms/次）
   const COLLAPSE_LINES = 5000;
   let rawText = '';
   let lineCount = 0;
+  /**
+   * 每行在 rawText 里的起始下标。100 万行只占 4MB，
+   * 而切成 100 万个字符串要 120MB —— 且每切一次就是一次全量扫描。
+   */
+  /** @type {Uint32Array|null} */ let lineStarts = null;
+  let previewCount = 0;
   let collapsed = false;
-  /** @type {string[]|null} */ let previewLines = null;
   /** @type {VList|null} */ let previewList = null;
   /** 上次分组的统计数据，切语言时要用它重新格式化 */
   let lastStats = null;
@@ -549,12 +554,32 @@
     return n;
   }
 
+  /** 扫出每行的起始下标。只记位置，不切字符串 */
+  function indexLines(text) {
+    const n = countLines(text);
+    const starts = new Uint32Array(n);
+    let k = 1;
+    for (let i = text.indexOf('\n'); i >= 0; i = text.indexOf('\n', i + 1)) starts[k++] = i + 1;
+    return starts;
+  }
+
+  /** 取第 i 行；行尾的 \r 不算内容 */
+  function lineAt(i) {
+    const from = lineStarts[i];
+    let to = i + 1 < lineStarts.length ? lineStarts[i + 1] - 1 : rawText.length;
+    if (to > from && rawText.charCodeAt(to - 1) === 13) to--;
+    return rawText.slice(from, to);
+  }
+
+  function setRaw(text) {
+    rawText = text;
+    lineStarts = indexLines(text);
+    lineCount = lineStarts.length;
+  }
+
   /** 折叠状态下正文在 rawText 里，展开状态下以 textarea 为准 */
   function syncRawText() {
-    if (!collapsed) {
-      rawText = el.input.value;
-      lineCount = countLines(rawText);
-    }
+    if (!collapsed) setRaw(el.input.value);
     return rawText;
   }
 
@@ -578,18 +603,18 @@
   /** 折叠后仍然要能看内容：同一套虚拟列表，只挂载可见的十几行 */
   function buildPreview() {
     destroyPreview();
-    previewLines = rawText.split(/\r?\n/);
-    if (previewLines.length && previewLines[previewLines.length - 1] === '') previewLines.pop();
+    // 原文以换行结尾时末尾会多出一个空行，不显示它
+    previewCount = lineCount;
+    if (previewCount > 0 && lineStarts[previewCount - 1] >= rawText.length) previewCount--;
     el.previewList.classList.toggle('nowrap', !wrapMode);
-    el.previewList.style.setProperty('--idxw', String(previewLines.length).length * 7 + 4 + 'px');
-    previewList = new VList(el.previewList, el.previewList.querySelector('.vpad'),
-      previewLines.length, (i) => previewLines[i]);
+    el.previewList.style.setProperty('--idxw', String(previewCount).length * 7 + 4 + 'px');
+    previewList = new VList(el.previewList, el.previewList.querySelector('.vpad'), previewCount, lineAt);
     previewList.mount();
   }
 
   function destroyPreview() {
     if (previewList) { previewList.destroy(); previewList = null; }
-    previewLines = null;
+    previewCount = 0;
     const pad = el.previewList.querySelector('.vpad');
     pad.textContent = '';
     pad.style.height = '';
@@ -684,11 +709,11 @@
     setInputText(res.text);
   });
 
-  function setInputText(text) {
-    rawText = text;
-    lineCount = countLines(text);
+  /** 载入一份新内容，按体量决定进文本框还是进折叠预览。不弹提示，交给调用方说 */
+  function loadText(text) {
+    setRaw(text);
     if (lineCount > COLLAPSE_LINES) {
-      // 大文件直接以折叠态载入，避免先把几十万像素高的文本控件建出来
+      // 大内容直接以折叠态载入，避免先把几十万像素高的文本控件建出来
       collapsed = true;
       el.input.value = '';
       el.input.hidden = true;
@@ -703,6 +728,10 @@
       el.input.value = text;
     }
     updateLineStat();
+  }
+
+  function setInputText(text) {
+    loadText(text);
     toast(t('toast.imported', { n: fmt(lineCount) }));
   }
 
