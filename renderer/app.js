@@ -779,10 +779,16 @@
    * 100 万行、内部两千万像素高，每次粘贴同步重排 8 秒，排完之后连拖动窗口
    * 和滚动都一直被这个巨型布局拖着。
    *
-   * 挂在整个输入面板而不是 textarea 上：折叠态下 textarea 是隐藏的，
-   * 但用户还要继续往里粘。
+   * 监听挂在 document 上，不是输入面板上。折叠时 textarea 被隐藏，焦点会掉回
+   * body —— body 不是面板的后代，粘贴事件的冒泡路径根本经过不了面板上的监听，
+   * 于是「粘完第一批之后再粘就没反应」。只有挂到 document 才一定收得到。
    */
-  el.inputPanel.addEventListener('paste', (e) => {
+  document.addEventListener('paste', (e) => {
+    // 焦点在别的输入控件里（比如自定义组数）时不抢
+    const t = e.target;
+    if (t && t !== el.input && !el.inputPanel.contains(t) &&
+        (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+
     const text = e.clipboardData && e.clipboardData.getData('text');
     if (!text) return;
 
