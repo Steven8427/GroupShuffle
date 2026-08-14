@@ -29,7 +29,7 @@ npm run dist
 | 文件 | 说明 |
 |---|---|
 | `GroupShuffle-Setup.exe` | 安装程序，约 92 MB |
-| `GroupShuffle-1.2.1-portable.exe` | 免安装版，单文件双击直接跑 |
+| `GroupShuffle-1.2.2-portable.exe` | 免安装版，单文件双击直接跑 |
 
 安装流程就是普通 Windows 软件那一套：双击 → 安装向导 → 可以改安装目录（默认 `C:\Program Files\GroupShuffle`）→ 自动创建桌面和开始菜单快捷方式 → 装完可勾选立即运行。**目标机器不需要 Node.js 或任何开发环境**，Electron 运行时已经打包在内。
 
@@ -40,6 +40,8 @@ npm run dist
 ```bash
 npm run icon
 ```
+
+> `LICENSE` 必须保留 UTF-8 BOM。NSIS 读没有 BOM 的文本会按系统 ANSI 代码页解析，安装向导的许可协议页就会显示成乱码。
 
 首次打包需要下载 Electron 二进制和 NSIS 资源，耗时较长；之后走缓存，一分钟内。
 

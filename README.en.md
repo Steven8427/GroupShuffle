@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.2.1-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.2.2-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 
@@ -40,6 +40,8 @@ The installer, uninstaller, desktop shortcut and Start menu entry all use `asset
 ```bash
 npm run icon
 ```
+
+> `LICENSE` must keep its UTF-8 BOM. NSIS reads a BOM-less text file using the system ANSI codepage, which turns the installer's licence page into mojibake.
 
 The first build downloads the Electron binaries and NSIS resources, so expect it to take a while; later builds hit the cache and finish in under a minute.
 
