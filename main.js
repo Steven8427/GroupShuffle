@@ -4,6 +4,9 @@ const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage, shell } = 
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 
+// 与渲染进程共用同一份文案表，加语言只改那一个文件
+const i18n = require('./renderer/i18n.js');
+
 const ICON_PATH = path.join(__dirname, 'assets', 'icon.png');
 
 // Windows 记事本 / Excel 友好：UTF-8 BOM + CRLF 行尾
@@ -14,55 +17,8 @@ let win = null;
 let tray = null;
 let confirmedQuit = false;
 
-// 主进程这边的原生对话框 / 托盘文案，跟着渲染进程的语言走
-const MAIN_TEXT = {
-  zh: {
-    openTitle: '选择要分组的文本文件',
-    filterText: '文本文件',
-    filterAll: '所有文件',
-    tooLarge: '文件过大（{mb} MB），请拆分后再导入',
-    saveTitle: '导出为 TXT',
-    dirTitle: '选择导出目录',
-    dirButton: '导出到此文件夹',
-    overwrite: '覆盖',
-    cancel: '取消',
-    overwriteMsg: '该文件夹已有 {n} 个 group-*.txt 文件',
-    overwriteDetail: '继续将覆盖同名文件。',
-    trayShow: '显示主窗口',
-    trayQuit: '退出',
-    closeTitle: '退出 GroupShuffle',
-    closeMsg: '确定要退出吗？',
-    closeDetail: '当前的分组结果不会被保存。想留在后台可以点最小化。',
-    closeConfirm: '退出',
-  },
-  en: {
-    openTitle: 'Choose a text file to split',
-    filterText: 'Text files',
-    filterAll: 'All files',
-    tooLarge: 'File is too large ({mb} MB) — please split it first',
-    saveTitle: 'Export as TXT',
-    dirTitle: 'Choose export folder',
-    dirButton: 'Export to this folder',
-    overwrite: 'Overwrite',
-    cancel: 'Cancel',
-    overwriteMsg: 'This folder already contains {n} group-*.txt files',
-    overwriteDetail: 'Continuing will overwrite files with the same name.',
-    trayShow: 'Show window',
-    trayQuit: 'Quit',
-    closeTitle: 'Quit GroupShuffle',
-    closeMsg: 'Quit GroupShuffle?',
-    closeDetail: 'The current grouping will not be saved. Minimize instead to keep it running.',
-    closeConfirm: 'Quit',
-  },
-};
-
-let lang = 'zh';
-
-function T(key, vars) {
-  let s = MAIN_TEXT[lang][key] || MAIN_TEXT.zh[key] || key;
-  if (vars) for (const k of Object.keys(vars)) s = s.split('{' + k + '}').join(vars[k]);
-  return s;
-}
+// 原生对话框与托盘的文案都在字典的 main.* 命名空间下
+const T = (key, vars) => i18n.t('main.' + key, vars);
 
 function createWindow() {
   win = new BrowserWindow({
@@ -182,9 +138,9 @@ function stripBom(text) {
 }
 
 ipcMain.handle('app:setLang', (_evt, next) => {
-  lang = MAIN_TEXT[next] ? next : 'zh';
-  buildTrayMenu();
-  return lang;
+  const applied = i18n.setLang(next);
+  buildTrayMenu(); // 托盘菜单是提前建好的，语言变了要重建
+  return applied;
 });
 
 ipcMain.handle('dialog:openTxt', async () => {
