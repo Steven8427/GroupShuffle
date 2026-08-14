@@ -52,13 +52,18 @@
         </div>
       </div>
       <textarea id="input" spellcheck="false" wrap="off" data-i18n-placeholder="input.placeholder"></textarea>
-      <div class="collapsed-input" id="collapsedInput" hidden>
+      <div class="collapsed-input" id="collapsedInput" tabindex="0" hidden>
         <div class="collapsed-head">
           <strong id="collapsedText"></strong>
           <span class="hint" data-i18n="collapsed.hint"></span>
           <button class="btn mini" id="btnExpand" type="button" data-i18n="btn.expand"></button>
         </div>
         <div class="vlist preview" id="previewList"><div class="vpad"></div></div>
+        <!-- 闪烁的光标条：折叠后没有真正的文本框，得让用户看出这里还能继续粘 -->
+        <div class="paste-bar">
+          <span class="caret"></span>
+          <span data-i18n="collapsed.pasteHere"></span>
+        </div>
       </div>
       <div class="drop-hint" id="dropHint" data-i18n="drop.hint"></div>
     </section>

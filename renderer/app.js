@@ -703,6 +703,8 @@
     el.collapsedInput.hidden = false;
     el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
     buildPreview();
+    // 焦点从被隐藏的文本框接过来，否则会掉到 body，用户看不出还能往这里粘
+    el.collapsedInput.focus({ preventScroll: true });
   }
 
   /** 原文以换行结尾时末尾会多出一个空行，不显示它 */
@@ -872,6 +874,7 @@
       el.collapsedInput.hidden = false;
       el.collapsedText.textContent = t('collapsed.loaded', { n: fmt(lineCount) });
       buildPreview();
+      el.collapsedInput.focus({ preventScroll: true });
     } else {
       collapsed = false;
       destroyPreview();
