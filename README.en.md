@@ -29,7 +29,7 @@ Artifacts land in `dist/` (both x64):
 | File | What it is |
 |---|---|
 | `GroupShuffle-Setup.exe` | Installer, about 92 MB |
-| `GroupShuffle-1.2.3-portable.exe` | Portable single file, just double-click it |
+| `GroupShuffle-1.2.4-portable.exe` | Portable single file, just double-click it |
 
 Installing works like any other Windows app: double-click, walk through the wizard, optionally change the install directory (defaults to `C:\Program Files\GroupShuffle`), get desktop and Start menu shortcuts, and tick "run now" at the end. **The target machine needs no Node.js and no development environment** — the Electron runtime ships inside.
 

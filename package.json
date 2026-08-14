@@ -1,7 +1,7 @@
 {
   "name": "groupshuffle",
   "productName": "GroupShuffle",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Split a list into random, evenly sized groups",
   "author": "Steven",
   "main": "main.js",
