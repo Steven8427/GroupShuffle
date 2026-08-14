@@ -60,7 +60,17 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 界面本身不可选中，像桌面软件那样。否则拖选或全选会把标题、按钮文字
+     一起刷蓝，而那些根本不是用户的数据 */
+  user-select: none;
 }
+
+/* 只有真正属于用户的内容可以选 */
+textarea#input,
+.vrow,
+.stat,
+.card-title,
+.card-count { user-select: text; }
 
 /* ---------- 顶栏 ---------- */
 /* 单行应用栏：图标 + 标题 + 右侧语言选择，不放副标题，留白交给下面的面板 */

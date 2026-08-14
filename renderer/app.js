@@ -909,8 +909,19 @@
     if (file) setInputText(await file.text());
   });
 
+  /** 焦点是否在真正能编辑文字的地方 */
+  const inTextField = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); run(); }
+
+    // 折叠态下焦点不在文本框里，Ctrl+A 会退化成「整份文档全选」，
+    // 把顶栏标题和按钮文字一起刷蓝；而且虚拟列表只挂载了二十来行，
+    // 真正的内容根本选不全，选出来是残缺的。不如不做。
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A') && !inTextField(e.target)) {
+      e.preventDefault();
+      if (collapsed) toast(t('toast.selectAllHint'));
+    }
   });
 
   // ---------- toast ----------

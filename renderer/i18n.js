@@ -40,6 +40,7 @@
         'collapsed.loaded': '已载入 {n} 行',
         'collapsed.hint': '只渲染可见的十几行，可直接滚动查看',
         'collapsed.pasteHere': '在此继续粘贴（Ctrl + V），内容会追加到末尾',
+        'toast.selectAllHint': '内容太多，无法整体选中。要取出内容请先分组，再用「复制本组」或「全部导出到文件夹」',
         'btn.expand': '编辑内容',
 
         'seg.groups': '{n} 组',
@@ -113,6 +114,7 @@
         'collapsed.loaded': '{n} lines loaded',
         'collapsed.hint': 'Only the visible rows are rendered — scroll to browse',
         'collapsed.pasteHere': 'Paste here (Ctrl + V) to append to the end',
+        'toast.selectAllHint': 'Too much content to select at once. Shuffle first, then use "Copy group" or "Export all to folder"',
         'btn.expand': 'Edit',
 
         'seg.groups': '{n} groups',
