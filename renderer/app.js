@@ -41,6 +41,10 @@
     btnLang: $('btnLang'),
     langName: $('langName'),
     langMenu: $('langMenu'),
+    updateBar: $('updateBar'),
+    updateText: $('updateText'),
+    btnRestart: $('btnRestart'),
+    btnUpdateLater: $('btnUpdateLater'),
     inputPanel: $('input').closest('.panel'),
   };
 
@@ -960,6 +964,30 @@
   }
 
   // ==========================================================
+  // 自动更新
+  // ==========================================================
+  /** 新版本号；有值说明已下载好，切语言时要用它重新组装提示文案 */
+  let pendingUpdate = null;
+
+  function showUpdateBar(version) {
+    pendingUpdate = version;
+    el.updateText.textContent = t('update.ready', { v: version });
+    el.updateBar.hidden = false;
+  }
+
+  if (api && api.onUpdateReady) {
+    api.onUpdateReady((info) => showUpdateBar(info.version));
+  }
+
+  el.btnRestart.addEventListener('click', () => {
+    el.btnRestart.disabled = true;
+    api.restartToUpdate();
+  });
+
+  // 收起来而已，不放弃更新 —— 下次退出应用时仍会自动装上
+  el.btnUpdateLater.addEventListener('click', () => { el.updateBar.hidden = true; });
+
+  // ==========================================================
   // 语言切换
   // ==========================================================
   const LANG_KEY = 'groupshuffle.lang';
@@ -979,6 +1007,7 @@
       btn.textContent = t('seg.groups', { n: btn.dataset.k });
     });
     el.btnRun.textContent = busy ? t('btn.running') : t('btn.run');
+    if (pendingUpdate) el.updateText.textContent = t('update.ready', { v: pendingUpdate });
     el.langName.textContent = getName();
     el.langMenu.querySelectorAll('[data-code]').forEach((item) => {
       item.setAttribute('aria-checked', String(item.dataset.code === getLang()));

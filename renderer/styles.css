@@ -200,6 +200,30 @@ textarea#input,
 
 .langmenu button[aria-checked="true"] .tick { visibility: visible; }
 
+/* ---------- 更新提示条 ---------- */
+.updatebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.updatebar[hidden] { display: none; }
+
+.updatebar svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.updatebar span { flex: 1 1 auto; color: var(--text); }
+.updatebar .btn { flex: 0 0 auto; }
+
 .progress {
   flex: 0 0 auto;
   height: 3px;

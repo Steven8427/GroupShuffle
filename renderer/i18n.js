@@ -54,6 +54,10 @@
         'opt.wrap': '长内容自动换行',
         'hint.shortcut': 'Ctrl + Enter 快速分组',
 
+        'update.ready': '新版本 {v} 已下载完成，重启后生效',
+        'update.restart': '立即重启',
+        'update.later': '稍后',
+
         'btn.exportAll': '全部导出到文件夹',
         'stat.result': '共 {n} 项 · {k} 组 · 每组 {size} 项 · 用时 {ms} ms',
         'card.title': '第 {n} 组',
@@ -128,6 +132,10 @@
         'opt.index': 'Include numbering when copying / exporting',
         'opt.wrap': 'Wrap long lines',
         'hint.shortcut': 'Ctrl + Enter to shuffle',
+
+        'update.ready': 'Version {v} has been downloaded — restart to apply',
+        'update.restart': 'Restart now',
+        'update.later': 'Later',
 
         'btn.exportAll': 'Export all to folder',
         'stat.result': '{n} items · {k} groups · {size} per group · {ms} ms',

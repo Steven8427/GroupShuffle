@@ -6,6 +6,7 @@ const path = require('node:path');
 
 // 与渲染进程共用同一份文案表，加语言只改那一个文件
 const i18n = require('./renderer/i18n.js');
+const updater = require('./updater.js');
 
 const ICON_PATH = path.join(__dirname, 'assets', 'icon.png');
 
@@ -115,6 +116,7 @@ function createTray() {
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  updater.init(win);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

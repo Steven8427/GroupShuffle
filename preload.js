@@ -10,4 +10,7 @@ contextBridge.exposeInMainWorld('api', {
   saveTxt: (defaultName, content) => ipcRenderer.invoke('dialog:saveTxt', defaultName, content),
   saveAll: (files) => ipcRenderer.invoke('dialog:saveAll', files),
   reveal: (target) => ipcRenderer.invoke('shell:reveal', target),
+  // 新版本下载完成后主进程会通知一次，界面据此显示重启提示
+  onUpdateReady: (cb) => ipcRenderer.on('update:ready', (_e, info) => cb(info)),
+  restartToUpdate: () => ipcRenderer.invoke('update:install'),
 });

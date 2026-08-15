@@ -40,6 +40,19 @@
     </svg>
   </template>
 
+  <!-- 新版本下载完成后才出现，用户自己决定何时重启 -->
+  <div class="updatebar" id="updateBar" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3v12"></path>
+      <path d="m7 10 5 5 5-5"></path>
+      <path d="M4 19h16"></path>
+    </svg>
+    <span id="updateText"></span>
+    <button class="btn mini primary" id="btnRestart" type="button" data-i18n="update.restart"></button>
+    <button class="btn mini" id="btnUpdateLater" type="button" data-i18n="update.later"></button>
+  </div>
+
   <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 
   <main>

@@ -1,7 +1,7 @@
 {
   "name": "groupshuffle",
   "productName": "GroupShuffle",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Split a list into random, evenly sized groups",
   "author": "Steven",
   "main": "main.js",
@@ -28,8 +28,7 @@
       "buildResources": "assets"
     },
     "files": [
-      "main.js",
-      "preload.js",
+      "*.js",
       "renderer/**/*",
       "assets/**/*",
       "!assets/icon-source.png",
@@ -38,17 +37,18 @@
     ],
     "win": {
       "icon": "assets/icon.ico",
-      "signtoolOptions": {
-        "publisherName": "Steven"
-      },
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -72,6 +72,15 @@
     },
     "portable": {
       "artifactName": "GroupShuffle-${version}-portable.exe"
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://REPLACE-WITH-YOUR-BUCKET-URL/"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
